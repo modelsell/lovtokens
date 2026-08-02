@@ -77,3 +77,14 @@ snapshots and issues eligible frozen certificates. Configure `CRON_SECRET` and
 an ECDSA P-256 private JWK in `CERTIFICATE_PRIVATE_JWK` before production. Run
 the D1 migration and verify the production query plans before opening the
 public board.
+
+## License
+
+Copyright © 2026 LovTokens contributors.
+
+LovTokens is licensed under the [GNU Affero General Public License v3.0
+only](./LICENSE) (`AGPL-3.0-only`). You may use LovTokens commercially, but
+copies and modified versions must preserve the applicable copyright and
+license notices. If you modify LovTokens and let users interact with it over a
+network, you must offer those users the complete corresponding source code at
+no charge, as required by section 13 of the license.

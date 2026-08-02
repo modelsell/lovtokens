@@ -9,3 +9,8 @@ and can be removed with `lovtokens auto-sync remove`.
 
 Local development defaults to `http://localhost:3100`. Set `LOVTOKENS_URL` to
 override the server for a single command.
+
+## License
+
+Licensed under `AGPL-3.0-only`. See the project
+[LICENSE](https://github.com/modelsell/lovtokens/blob/main/LICENSE).

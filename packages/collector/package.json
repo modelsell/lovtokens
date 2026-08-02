@@ -2,7 +2,7 @@
   "name": "lovtokens",
   "version": "0.1.0",
   "description": "Privacy-first Codex and Claude Code token collector for LovTokens",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "engines": { "node": ">=20.9.0" },
   "keywords": ["codex", "claude-code", "tokens", "usage", "privacy"],
   "publishConfig": { "access": "public" },
