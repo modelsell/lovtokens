@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Privacy-first Codex and Claude Code token collector for LovTokens",
   "license": "AGPL-3.0-only",
+  "homepage": "https://github.com/modelsell/lovtokens#readme",
+  "bugs": {
+    "url": "https://github.com/modelsell/lovtokens/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/modelsell/lovtokens.git",
+    "directory": "packages/collector"
+  },
   "engines": { "node": ">=20.9.0" },
   "keywords": ["codex", "claude-code", "tokens", "usage", "privacy"],
   "publishConfig": { "access": "public" },
@@ -19,10 +28,10 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@lovtokens/token-schema": "workspace:*",
     "commander": "^15.0.0"
   },
   "devDependencies": {
+    "@lovtokens/token-schema": "workspace:*",
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
     "eslint": "^9.39.1",

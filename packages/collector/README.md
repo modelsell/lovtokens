@@ -4,6 +4,11 @@ The collector reads only known Codex and Claude Code session directories. It
 extracts token counters, timestamps, source, and model names and never sends
 prompts, responses, code, file paths, or repository names.
 
+```bash
+npm install --global lovtokens
+lovtokens show-data
+```
+
 Run `lovtokens show-data` to inspect the exact upload payload. Auto sync is opt-in
 and can be removed with `lovtokens auto-sync remove`.
 
