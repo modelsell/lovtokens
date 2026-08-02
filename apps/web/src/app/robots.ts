@@ -1,0 +1,3 @@
+import type { MetadataRoute } from "next";
+import { siteUrl } from "@/lib/runtime";
+export default function robots(): MetadataRoute.Robots { const root = siteUrl(); return { rules: { userAgent: "*", allow: ["/", "/leaderboard", "/u/", "/certificate/", "/methodology", "/privacy", "/docs", "/compare/", "/blog", "/zh/leaderboard", "/zh/u/", "/zh/certificate/", "/zh/methodology", "/zh/privacy", "/zh/docs", "/zh/compare/", "/zh/blog"], disallow: ["/api/", "/dashboard", "/settings", "/connect", "/login", "/register", "/forgot-password", "/reset-password", "/zh/dashboard", "/zh/settings", "/zh/connect", "/zh/login", "/zh/register", "/zh/forgot-password", "/zh/reset-password"] }, sitemap: `${root}/sitemap.xml` }; }

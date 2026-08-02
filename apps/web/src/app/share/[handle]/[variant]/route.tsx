@@ -1,0 +1,28 @@
+import { ImageResponse } from "next/og";
+import QRCode from "qrcode";
+import { achievementFor, formatTokenCount } from "@/lib/format";
+import { getShareProfile } from "@/lib/repository";
+import { getShareBucket, siteUrl } from "@/lib/runtime";
+/* eslint-disable @next/next/no-img-element -- next/og requires directly renderable data URIs */
+
+export const runtime = "nodejs";
+const sizes = { "month.png": [1200, 630], "lifetime-square.png": [1080, 1080], "story.png": [1080, 1920], "certificate.png": [1600, 900] } as const;
+const themes = { obsidian: ["#090c0a", "#c8f06a", "#f6f7f3"], terminal: ["#06101d", "#62d6ff", "#f3f7ff"], ivory: ["#efe8d8", "#192019", "#192019"], aurora: ["#111028", "#c4a7ff", "#f8f4ff"] } as const;
+
+export async function GET(request: Request, { params }: { params: Promise<{ handle: string; variant: string }> }) {
+  const { handle, variant } = await params; const size = sizes[variant as keyof typeof sizes]; if (!size) return new Response("Unknown image format", { status: 404 });
+  const url = new URL(request.url); const theme = (url.searchParams.get("theme") || "obsidian") as keyof typeof themes; if (!themes[theme]) return new Response("Unknown theme", { status: 400 });
+  const period = variant === "month.png" ? "month" : "all"; const p = await getShareProfile(handle, period); if (!p) return new Response("Profile is private or missing", { status: 404 });
+  const cacheKey = `v3/${p.handle}/${p.statsVersion}-${p.privacyVersion}/${period}/${variant}/${theme}.png`; const bucket = await getShareBucket(); const cached = await bucket?.get(cacheKey); if (cached) return new Response(cached.body, { headers: { "content-type": "image/png", "cache-control": "public,max-age=31536000,immutable", etag: cached.httpEtag } });
+  const [background, accent, foreground] = themes[theme]; const profileUrl = `${siteUrl()}/u/${p.handle}`; const qr = await QRCode.toDataURL(profileUrl, { margin: 1, width: 150, color: { dark: foreground, light: "#00000000" } });
+  const exact = p.showExactTokens ? formatTokenCount(p.processedTokens) : "PRIVATE"; const codexPercent = Math.round((p.codexTokens / Math.max(1, p.processedTokens)) * 100); const tall = size[1] > size[0];
+  const response = new ImageResponse(<div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", background, color: foreground, padding: tall ? 78 : 64, fontFamily: "Arial", position: "relative", overflow: "hidden" }}>
+    <div style={{ position: "absolute", inset: 0, display: "flex", opacity: .16, backgroundImage: `linear-gradient(${accent} 1px,transparent 1px),linear-gradient(90deg,${accent} 1px,transparent 1px)`, backgroundSize: "42px 42px" }} />
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><div style={{ display: "flex", fontSize: 34, fontWeight: 900, letterSpacing: -2 }}>LovTokens<span style={{ color: accent }}>/</span></div><div style={{ display: "flex", fontSize: 16, letterSpacing: 4 }}>{period === "month" ? "THIS MONTH · UTC" : "ALL-TIME PORTFOLIO"}</div></div>
+    <div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", fontSize: tall ? 38 : 28, opacity: .62 }}>@{p.isAnonymous ? `anon-${p.handle.slice(-4)}` : p.handle}</div><div style={{ display: "flex", fontSize: tall ? 62 : 46, fontWeight: 800, marginTop: 8 }}>{p.displayName}</div><div style={{ display: "flex", color: accent, fontSize: tall ? 180 : 132, fontWeight: 900, letterSpacing: -9, lineHeight: .9, marginTop: tall ? 130 : 45 }}>{exact}</div>{p.showExactTokens && <div style={{ display: "flex", fontSize: 18, letterSpacing: 5, marginTop: 22, opacity: .58 }}>TOKENS PROCESSED</div>}</div>
+    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}><div style={{ display: "flex", flexDirection: "column", gap: 20 }}><div style={{ display: "flex", gap: 52 }}>{p.showRank && <Metric label="GLOBAL RANK" value={p.rank ? `#${p.rank}` : "—"} />} {p.showRank && <Metric label="PERCENTILE" value={`TOP ${p.percentile < 1 ? p.percentile.toFixed(1) : Math.round(p.percentile)}%`} />}<Metric label="ACTIVE DAYS" value={String(p.activeDays)} /></div><div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 15, letterSpacing: 2 }}><div style={{ width: 300, height: 8, display: "flex", background: "#647067" }}><div style={{ width: `${codexPercent}%`, background: accent }} /></div><span>CODEX {codexPercent}% · CLAUDE {100 - codexPercent}%</span></div><div style={{ alignSelf: "flex-start", display: "flex", border: `1px solid ${accent}`, color: accent, padding: "10px 14px", fontSize: 16, letterSpacing: 2 }}>{achievementFor(p.processedTokens, p.activeDays, p.codexTokens, p.claudeTokens).toUpperCase()}</div><div style={{ display: "flex", fontSize: 13, opacity: .58 }}>Usage is not a productivity score · LovTokens</div></div><img alt="Profile QR code" src={qr} width={tall ? 170 : 130} height={tall ? 170 : 130} /></div>
+  </div>, { width: size[0], height: size[1] });
+  const bytes = await response.arrayBuffer(); await bucket?.put(cacheKey, bytes, { httpMetadata: { contentType: "image/png", cacheControl: "public,max-age=31536000,immutable" } });
+  return new Response(bytes, { headers: { "content-type": "image/png", "cache-control": "public,max-age=31536000,immutable" } });
+}
+function Metric({ label, value }: { label: string; value: string }) { return <div style={{ display: "flex", flexDirection: "column", gap: 7 }}><span style={{ fontSize: 12, letterSpacing: 3, opacity: .58 }}>{label}</span><strong style={{ fontSize: 32 }}>{value}</strong></div>; }

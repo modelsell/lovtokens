@@ -1,0 +1,2 @@
+import { defineConfig, devices } from "@playwright/test";
+export default defineConfig({ testDir: "./e2e", use: { baseURL: "http://localhost:3107", trace: "retain-on-failure" }, webServer: { command: "pnpm exec next dev --port 3107", url: "http://localhost:3107", reuseExistingServer: false, env: { PUBLIC_SITE_URL: "http://localhost:3107", BETTER_AUTH_URL: "http://localhost:3107" } }, projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }] });

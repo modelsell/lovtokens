@@ -1,0 +1,2 @@
+import { siteUrl } from "@/lib/runtime";
+export function GET() { const root = siteUrl(); const maps = [`${root}/sitemaps/content.xml`, `${root}/sitemaps/users.xml`, `${root}/sitemaps/certificates.xml`]; return new Response(`<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${maps.map((loc) => `<sitemap><loc>${loc}</loc></sitemap>`).join("")}</sitemapindex>`, { headers: { "content-type": "application/xml", "cache-control": "public,max-age=600" } }); }

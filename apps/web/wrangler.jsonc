@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": "worker.ts",
+  "name": "lovtokens",
+  "compatibility_date": "2026-08-02",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "lovtokens" }],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "lovtokens-db",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "../../migrations"
+    }
+  ],
+  "r2_buckets": [
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "lovtokens-next-cache" },
+    { "binding": "SHARE_ASSETS", "bucket_name": "lovtokens-share-assets" }
+  ],
+  "vars": { "PUBLIC_SITE_URL": "https://example.com" },
+  "observability": { "enabled": true },
+  "triggers": { "crons": ["*/10 * * * *"] }
+}

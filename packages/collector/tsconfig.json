@@ -1,0 +1,10 @@
+{
+  "extends": "../config/tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "baseUrl": ".",
+    "paths": { "@lovtokens/token-schema": ["../token-schema/src/index.ts"] },
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src", "test"]
+}

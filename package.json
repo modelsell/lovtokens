@@ -1,0 +1,23 @@
+{
+  "name": "@lovtokens/root",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "scripts": {
+    "build": "pnpm --filter @lovtokens/token-schema build && pnpm --filter lovtokens build && pnpm --filter @lovtokens/web build",
+    "cf-build": "pnpm --filter @lovtokens/token-schema build && pnpm --filter @lovtokens/web cf-build",
+    "dev": "pnpm --filter @lovtokens/web dev",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @lovtokens/web test:e2e",
+    "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "db:generate": "pnpm --filter @lovtokens/web db:generate",
+    "db:migrate:local": "pnpm --filter @lovtokens/web db:migrate:local",
+    "preview": "pnpm --filter @lovtokens/web preview",
+    "deploy": "pnpm --filter @lovtokens/web deploy"
+  }
+}

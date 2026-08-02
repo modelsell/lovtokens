@@ -1,0 +1,36 @@
+{
+  "name": "lovtokens",
+  "version": "0.1.0",
+  "description": "Privacy-first Codex and Claude Code token collector for LovTokens",
+  "license": "MIT",
+  "engines": { "node": ">=20.9.0" },
+  "keywords": ["codex", "claude-code", "tokens", "usage", "privacy"],
+  "publishConfig": { "access": "public" },
+  "type": "module",
+  "bin": {
+    "lovtokens": "./dist/index.js"
+  },
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/index.ts",
+    "lint": "eslint src test",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@lovtokens/token-schema": "workspace:*",
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vitest": "^4.1.10"
+  }
+}
