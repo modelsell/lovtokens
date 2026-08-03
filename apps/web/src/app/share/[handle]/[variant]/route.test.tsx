@@ -54,5 +54,8 @@ describe("portrait share image", () => {
     expect(svg.length).toBeGreaterThan(1_000);
     expect(svg).toContain('width="1080" height="1350"');
     expect(svg).toContain("ALL-TIME TOKEN PORTFOLIO");
+    expect(svg).toContain('data-share-layout="portrait-v2"');
+    expect(svg).toContain('alt="Profile QR code"');
+    expect(svg).toContain('width="224" height="224"');
   }, 20_000);
 });

@@ -130,36 +130,36 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .cli-extra { color: var(--muted); font-size: 9px; line-height: 1.55; margin: 22px 0 0; }
 .cli-extra code { background: #eef0ea; padding: 2px 4px; }
 
-.share-card { aspect-ratio: 4/5; background: #0a0d0b; color: #f6f7f3; container-type: inline-size; display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 8%; position: relative; width: 100%; }
+.share-card { aspect-ratio: 4/5; background: #0a0d0b; color: #f6f7f3; container-type: inline-size; display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 6%; position: relative; width: 100%; }
 .share-grid { background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 28px 28px; inset: 0; mask-image: linear-gradient(to bottom right, black, transparent 65%); position: absolute; }
 .share-top, .share-person, .share-main, .share-stats, .share-card-distributions, .share-foot { position: relative; z-index: 1; }
-.share-top { align-items: center; display: flex; font-size: 2.7cqw; justify-content: space-between; letter-spacing: .14em; }
-.share-top strong { color: var(--acid); font-size: 5cqw; letter-spacing: -.04em; }
-.share-person { margin-top: 8%; }
-.share-person span { color: #8d968e; font-size: 3.2cqw; }
-.share-person h3 { font-size: 7cqw; letter-spacing: -.04em; margin: 2% 0 0; }
-.share-main { margin-top: 8%; }
-.share-main small, .share-stats small { color: #818a82; font-size: 2.5cqw; font-weight: 800; letter-spacing: .14em; }
-.share-main > strong { color: var(--acid); display: block; font-size: 16cqw; letter-spacing: -.075em; line-height: .9; margin-top: 3%; }
-.share-main p { color: #808980; font-size: 3cqw; margin: 4% 0; }
-.share-card-heatmap { display: grid; gap: 1.2%; grid-auto-flow: column; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(7, 1fr); left: 8%; opacity: .22; position: absolute; right: 8%; top: 42%; z-index: 0; }
+.share-top { align-items: center; display: flex; font-size: 3cqw; justify-content: space-between; letter-spacing: .14em; }
+.share-top strong { color: var(--acid); font-size: 5.7cqw; letter-spacing: -.04em; }
+.share-person { margin-top: 6%; }
+.share-person span { color: #8d968e; font-size: 3.7cqw; }
+.share-person h3 { font-size: 7.8cqw; letter-spacing: -.04em; margin: 1.5% 0 0; }
+.share-main { margin-top: 5.5%; }
+.share-main small, .share-stats small { color: #818a82; font-size: 2.8cqw; font-weight: 800; letter-spacing: .14em; }
+.share-main > strong { color: var(--acid); display: block; font-size: 18cqw; letter-spacing: -.075em; line-height: .88; margin-top: 2.5%; }
+.share-main p { color: #808980; font-size: 3.3cqw; margin: 3% 0; }
+.share-card-heatmap { display: grid; gap: 1.2%; grid-auto-flow: column; grid-template-columns: repeat(12, 1fr); grid-template-rows: repeat(7, 1fr); left: 6%; opacity: .22; position: absolute; right: 6%; top: 41%; z-index: 0; }
 .share-card-heatmap i { aspect-ratio: 1; background: #7b837c; display: block; }
 .share-card-heatmap i[data-level="1"] { background: #9ebd58; }
 .share-card-heatmap i[data-level="2"] { background: #b9e05d; }
 .share-card-heatmap i[data-level="3"] { background: #c8f06a; }
 .share-card-heatmap i[data-level="4"] { background: white; }
-.share-stats { border-bottom: 1px solid #303630; border-top: 1px solid #303630; display: grid; grid-template-columns: repeat(3, 1fr); margin-top: auto; padding: 4% 0; }
+.share-stats { border-bottom: 1px solid #303630; border-top: 1px solid #303630; display: grid; grid-template-columns: repeat(3, 1fr); margin-top: auto; padding: 3.5% 0; }
 .share-stats span { display: grid; gap: 4px; }
-.share-stats strong { font-size: 5cqw; }
-.share-card-distributions { display: grid; gap: 5%; grid-template-columns: 1fr 1fr; margin-top: 5%; }
+.share-stats strong { font-size: 5.7cqw; }
+.share-card-distributions { display: grid; gap: 5%; grid-template-columns: 1fr 1fr; margin-top: 4%; }
 .share-card-distributions > div { display: grid; gap: 2px; min-width: 0; }
-.share-card-distributions > div > strong { font-size: 2.1cqw; letter-spacing: .07em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.share-card-distributions > div > strong { font-size: 2.4cqw; letter-spacing: .07em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .share-card-distributions > div > span { display: grid; gap: 2px; }
-.share-card-distributions small { font-size: 2cqw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.share-card-distributions small { font-size: 2.25cqw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .share-card-distributions i { background: rgba(120,130,122,.35); display: block; height: 3px; }
 .share-card-distributions b { background: var(--acid); display: block; height: 100%; }
-.share-foot { align-items: end; display: flex; font-size: 2.2cqw; justify-content: space-between; margin-top: 7%; }
-.share-foot strong { border: 1px solid var(--acid); color: var(--acid); font-size: 2.4cqw; padding: 4% 5%; text-transform: uppercase; }
+.share-foot { align-items: end; display: flex; font-size: 2.45cqw; justify-content: space-between; margin-top: 4.5%; }
+.share-foot strong { border: 1px solid var(--acid); color: var(--acid); font-size: 2.7cqw; padding: 3.5% 4.5%; text-transform: uppercase; }
 .share-foot span { color: #6e766f; }
 .share-terminal { background: linear-gradient(145deg, #06101d, #071c28); }
 .share-terminal .share-grid { background-image: linear-gradient(rgba(98,214,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(98,214,255,.07) 1px, transparent 1px); }
@@ -176,7 +176,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .share-aurora { background: linear-gradient(145deg, #0b1222 0%, #171230 48%, #082423 100%); }
 .share-aurora::after { background: radial-gradient(circle, rgba(111,140,255,.5), transparent 60%); content: ""; filter: blur(25px); inset: 20% -20% -30% 40%; position: absolute; }
 .share-aurora .share-main > strong { color: #f4f1ff; text-shadow: 0 0 35px rgba(149,111,255,.6); }
-.share-theme-gallery { display: grid; gap: 18px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.share-theme-gallery { display: grid; gap: 24px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .share-theme-option { display: grid; gap: 11px; min-width: 0; }
 .share-theme-image { aspect-ratio: 4/5; display: block; height: auto; object-fit: cover; width: 100%; }
 .share-theme-preview-button { background: transparent; border: 0; cursor: zoom-in; display: block; padding: 0; text-align: left; transition: transform 160ms ease, box-shadow 160ms ease; width: 100%; }
