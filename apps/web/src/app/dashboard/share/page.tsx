@@ -21,6 +21,7 @@ export default async function ShareStudio() {
       activeDays={details?.activeDays || 0}
       claudeTokens={details?.claudeTokens || 0}
       codexTokens={details?.codexTokens || 0}
+      workbuddyTokens={details?.workbuddyTokens || 0}
       displayName={String(profile?.display_name || session?.user.name || (locale === "zh" ? "你的名字" : "Your Name"))}
       downloadEnabled={Boolean(profile?.is_public)}
       handle={String(profile?.handle || "your-handle")}

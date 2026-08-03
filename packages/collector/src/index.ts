@@ -6,9 +6,11 @@ import { formatTokenCount, processedTokens, syncPayloadV1Schema } from "@lovtoke
 import { readConfig, removeConfig, resolveServerUrl, writeConfig } from "./config.js";
 import { installAutoSync, openExternal, removeAutoSync } from "./platform.js";
 import { scanAll } from "./scanner.js";
+import { maybeAutoUpdate } from "./updater.js";
 
 const program = new Command();
-program.name("lovtokens").description("Your private AI token collector").version("0.1.1");
+const collectorVersion = "0.1.3";
+program.name("lovtokens").description("Your private AI token collector").version(collectorVersion);
 
 program.command("connect").description("Connect this device and run the first sync").option("--server <url>", "LovTokens site URL").action(async ({ server }: { server?: string }) => {
   const config = await readConfig();
@@ -42,7 +44,7 @@ program.command("connect").description("Connect this device and run the first sy
 });
 
 program.command("agent-register")
-  .description("Conversational account registration for Codex and Claude Code")
+  .description("Conversational account registration for Codex, Claude Code, and WorkBuddy")
   .option("--server <url>", "LovTokens site URL shown in the copied registration guide")
   .action(async ({ server }: { server?: string }) => {
     const current = await readConfig();
@@ -89,7 +91,8 @@ program.command("agent-register")
       const executable = process.argv[1];
       if (!executable || !(await exists(executable))) throw new Error("Account and first sync completed, but the scheduled task could not resolve the lovtokens executable. Run lovtokens auto-sync install to retry.");
       try {
-        console.log(`Scheduled sync: installed at ${await installAutoSync(executable)}`);
+        console.log(`Scheduled sync and daily automatic updates: installed at ${await installAutoSync(executable)}`);
+        await checkForAutoUpdate();
       } catch (error) {
         throw new Error(`Account and first sync completed, but scheduled sync installation failed. Run lovtokens auto-sync install to retry. ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -126,11 +129,12 @@ program.command("card").description("Open your latest public share card").action
 });
 
 const autoSync = program.command("auto-sync");
-autoSync.command("install").description("Install an opt-in 30 minute background sync").action(async () => {
+autoSync.command("install").description("Install hourly sync with daily automatic updates").action(async () => {
   const executable = process.argv[1];
   if (!executable || !(await exists(executable))) throw new Error("Could not resolve the lovtokens executable.");
-  console.log(`Installing a 30 minute background task for ${executable}`);
+  console.log(`Installing an hourly background task with daily automatic updates for ${executable}`);
   console.log(`Installed: ${await installAutoSync(executable)}`);
+  await checkForAutoUpdate();
 });
 autoSync.command("remove").description("Remove the background sync").action(async () => {
   await removeAutoSync();
@@ -156,6 +160,7 @@ async function sync(dryRun: boolean) {
     return;
   }
   if (!config.deviceId || !config.deviceToken) throw new Error("Run lovtokens connect first, or use sync --dry-run.");
+  await checkForAutoUpdate();
   const response = await fetch(`${config.serverUrl}/api/sync/v1`, {
     method: "POST",
     headers: { authorization: `Bearer ${config.deviceToken}`, "content-type": "application/json" },
@@ -171,8 +176,21 @@ async function sync(dryRun: boolean) {
   }
 }
 
+async function checkForAutoUpdate() {
+  try {
+    const update = await maybeAutoUpdate({ currentVersion: collectorVersion });
+    if (update.status === "updated") {
+      console.log(`LovTokens ${update.latestVersion} installed. The next scheduled sync will use it.`);
+    } else if (update.status === "failed") {
+      console.error(`LovTokens update check failed; sync remains active: ${update.error}`);
+    }
+  } catch (error) {
+    console.error(`LovTokens update check failed; sync remains active: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
 function makePayload(deviceId: string, buckets: Awaited<ReturnType<typeof scanAll>>["buckets"]) {
-  return syncPayloadV1Schema.parse({ schemaVersion: 1, collectorVersion: "0.1.1", deviceId, generatedAt: new Date().toISOString(), buckets });
+  return syncPayloadV1Schema.parse({ schemaVersion: 1, collectorVersion, deviceId, generatedAt: new Date().toISOString(), buckets });
 }
 
 function printCoverage(sources: Awaited<ReturnType<typeof scanAll>>["sources"]) {
@@ -207,7 +225,7 @@ async function promptAgentRegistration() {
     const nickname = await askUntil(prompt, "Nickname: ", (value) => value.length >= 1 && value.length <= 60, "Nickname must contain 1–60 characters.");
     const visibilityAnswer = await askUntil(prompt, "Privacy [1 private (recommended) / 2 summary / 3 public]: ", (value) => ["", "1", "2", "3", "private", "summary", "public"].includes(value.toLowerCase()), "Choose 1, 2, or 3.");
     const visibility = ({ "2": "summary", "3": "public", summary: "summary", public: "public" } as const)[visibilityAnswer.toLowerCase() as "2" | "3" | "summary" | "public"] || "private";
-    const autoSyncAnswer = await askUntil(prompt, "Install a local 30-minute scheduled sync? [y/N]: ", (value) => ["", "y", "yes", "n", "no"].includes(value.toLowerCase()), "Answer yes or no.");
+    const autoSyncAnswer = await askUntil(prompt, "Install a local hourly scheduled sync with daily automatic updates? [y/N]: ", (value) => ["", "y", "yes", "n", "no"].includes(value.toLowerCase()), "Answer yes or no.");
     const autoSync = ["y", "yes"].includes(autoSyncAnswer.toLowerCase());
     console.log(`\nConfirm: ${email} · ${nickname} · ${visibility} · scheduled sync ${autoSync ? "on" : "off"}`);
     const confirmed = await askUntil(prompt, "Create the account and run the first sync? [y/N]: ", (value) => ["", "y", "yes", "n", "no"].includes(value.toLowerCase()), "Answer yes or no.");

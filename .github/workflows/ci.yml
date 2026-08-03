@@ -17,8 +17,38 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @lovtokens/web exec playwright install --with-deps chromium
       - run: pnpm check
       - run: pnpm cf-build
-      - run: pnpm --filter @lovtokens/web exec playwright install --with-deps chromium
       - run: pnpm db:migrate:local
       - run: pnpm test:e2e
+
+  deploy:
+    name: Deploy production
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: lovtokens-production
+      cancel-in-progress: false
+    environment:
+      name: production
+      url: https://lovtokens.com
+    env:
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Apply production D1 migrations
+        run: pnpm --filter @lovtokens/web exec wrangler d1 migrations apply lovtokens-db --remote
+      - name: Deploy production Worker
+        run: pnpm deploy

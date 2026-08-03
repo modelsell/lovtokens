@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { scanClaude } from "../src/claude.js";
 import { scanCodex } from "../src/codex.js";
+import { scanWorkBuddy } from "../src/workbuddy.js";
 
 describe("Codex scanner", () => {
   it("uses last_token_usage and keeps cache as an input subset", async () => {
@@ -43,5 +44,45 @@ describe("Claude scanner", () => {
     expect(result.buckets).toHaveLength(1);
     expect(result.buckets[0]).toMatchObject({ inputTokensTotal: 10_000, freshInputTokens: 1_000, cacheReadTokens: 8_000, cacheWriteTokens: 1_000, requestCount: 1 });
     expect(JSON.stringify(result)).not.toContain("private");
+  });
+});
+
+describe("WorkBuddy scanner", () => {
+  it("reads response usage without retaining conversation content or paths", async () => {
+    const root = await mkdtemp(join(tmpdir(), "lovtokens-workbuddy-"));
+    const row = {
+      type: "message",
+      id: "response-1",
+      sessionId: "workbuddy-a",
+      timestamp: 1_775_290_400_000,
+      cwd: "/private/workbuddy-project",
+      content: "private WorkBuddy response",
+      providerData: {
+        requestModelName: "Hy3",
+        rawUsage: {
+          prompt_tokens: 10_000,
+          prompt_cache_hit_tokens: 7_000,
+          prompt_cache_write_tokens: 500,
+          completion_tokens: 400,
+          completion_tokens_details: { reasoning_tokens: 200 },
+        },
+      },
+    };
+    await writeFile(join(root, "session.jsonl"), `${JSON.stringify(row)}\n${JSON.stringify(row)}\n`);
+    const result = await scanWorkBuddy([root]);
+    expect(result.buckets).toHaveLength(1);
+    expect(result.buckets[0]).toMatchObject({
+      source: "workbuddy",
+      model: "Hy3",
+      inputTokensTotal: 10_000,
+      freshInputTokens: 2_500,
+      cacheReadTokens: 7_000,
+      cacheWriteTokens: 500,
+      outputTokensTotal: 400,
+      reasoningOutputTokens: 200,
+      requestCount: 1,
+    });
+    expect(JSON.stringify(result)).not.toContain("private WorkBuddy response");
+    expect(JSON.stringify(result)).not.toContain("/private/workbuddy-project");
   });
 });

@@ -13,8 +13,10 @@ export function LeaderboardTable({ entries, compact = false, locale = "en" }: { 
     <div className="leaderboard-table" data-compact={compact || undefined}>
       <div className="leaderboard-head"><span>{t(locale, "Rank")}</span><span>{t(locale, "Builder")}</span><span>{t(locale, "Agent mix")}</span><span>{t(locale, "Active")}</span><span>{t(locale, "Processed")}</span></div>
       {entries.map((entry) => {
-        const total = Math.max(1, entry.codexTokens + entry.claudeTokens);
+        const total = Math.max(1, entry.codexTokens + entry.claudeTokens + entry.workbuddyTokens);
         const codex = Math.round((entry.codexTokens / total) * 100);
+        const claude = Math.round((entry.claudeTokens / total) * 100);
+        const workbuddy = Math.max(0, 100 - codex - claude);
         return (
           <LocaleLink className="leaderboard-row" href={localePath(`/u/${entry.handle}`, locale)} key={entry.handle} locale={locale}>
             <span className={`rank rank-${entry.rank}`}>{String(entry.rank).padStart(2, "0")}</span>
@@ -22,7 +24,7 @@ export function LeaderboardTable({ entries, compact = false, locale = "en" }: { 
               <span className="avatar">{entry.avatarUrl && entry.showAvatar && !entry.isAnonymous ? <Image alt="" fill sizes="40px" src={entry.avatarUrl} /> : entry.displayName.slice(0, 1).toUpperCase()}</span>
               <span><strong>{entry.displayName}</strong><small>@{entry.isAnonymous ? `anon-${entry.handle.slice(-4)}` : entry.handle} <BadgeCheck size={12} /></small></span>
             </span>
-            <span className="agent-mix"><i style={{ width: `${codex}%` }} /><b style={{ width: `${100 - codex}%` }} /><small>{codex}% Codex</small></span>
+            <span className="agent-mix"><i style={{ width: `${codex}%` }} /><b style={{ width: `${claude}%` }} /><em style={{ width: `${workbuddy}%` }} /><small>{codex}% Codex · {claude}% Claude · {workbuddy}% WorkBuddy</small></span>
             <span className="active-days"><strong>{entry.activeDays}</strong><small>{t(locale, "days")}</small></span>
             <span className="token-cell"><strong>{entry.showExactTokens ? formatTokenCount(entry.processedTokens) : t(locale, "Private")}</strong><small>{formatPercent(entry.percentile, locale)}</small><ChevronRight size={15} /></span>
           </LocaleLink>

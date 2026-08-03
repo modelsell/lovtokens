@@ -16,6 +16,11 @@ export const configPath = () => {
   return join(process.env.XDG_CONFIG_HOME || join(homedir(), ".config"), "lovtokens", "config.json");
 };
 
+export const configDir = () => dirname(configPath());
+export const autoSyncRunnerPath = () => join(configDir(), "auto-sync-runner.mjs");
+export const updateStatePath = () => join(configDir(), "update-state.json");
+export const updateRuntimeDir = () => join(configDir(), "runtime");
+
 export async function readConfig(): Promise<CollectorConfig> {
   try {
     const config = JSON.parse(await readFile(configPath(), "utf8")) as CollectorConfig;

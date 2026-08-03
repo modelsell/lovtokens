@@ -1,8 +1,8 @@
 # LovTokens
 
-Your AI Token Portfolio. LovTokens reads aggregate usage from local Codex and
-Claude Code session files, builds a private dashboard, and creates opt-in public
-leaderboards, profiles, share cards, and usage certificates.
+Your AI Token Portfolio. LovTokens reads aggregate usage from local Codex,
+Claude Code, and WorkBuddy session files, builds a private dashboard, and creates
+opt-in public leaderboards, profiles, share cards, and usage certificates.
 
 LovTokens never uploads prompts, responses, source code, repository names, or
 file paths. The collector is open source and `lovtokens show-data` prints the
@@ -51,10 +51,11 @@ node packages/collector/dist/index.js sync --dry-run
 
 The complete Agent workflow is stored at `apps/web/public/agent-register.md` and
 is published as `/agent-register.md`. The homepage copies only a short handoff
-that tells Codex or Claude Code to read that production URL. The agent-facing
+that tells Codex, Claude Code, or WorkBuddy to read that production URL. The agent-facing
 `agent-register` command creates the email account,
 applies an explicit private/summary/public policy, binds the current device, runs
-the first sync, and optionally installs the existing 30-minute background task.
+the first sync, and optionally installs an hourly background task that checks
+for and installs newer versions once per day.
 The initial password is generated locally and shown once; the device token is
 stored through the existing operating-system credential path.
 

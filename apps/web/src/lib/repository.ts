@@ -14,10 +14,10 @@ export async function getLeaderboard(period = "month", source = "all", limit = 1
   const db = await getD1();
   if (!db) return [];
   try {
-  const snapshot = await db.prepare(`SELECT ls.rank,p.handle,p.display_name,p.avatar_url,p.is_anonymous,p.show_exact_tokens,p.show_avatar,ls.processed_tokens,ls.active_days,ls.percentile,ls.codex_tokens,ls.claude_tokens,'collector-checked' trust_level,ls.generated_at FROM leaderboard_snapshots ls JOIN profiles p ON p.user_id=ls.user_id WHERE ls.period=?1 AND ls.source=?2 AND p.is_public=1 AND p.show_rank=1 ORDER BY ls.rank LIMIT ?3`).bind(period, source, limit).all<Record<string, unknown>>();
+  const snapshot = await db.prepare(`SELECT ls.rank,p.handle,p.display_name,p.avatar_url,p.is_anonymous,p.show_exact_tokens,p.show_avatar,ls.processed_tokens,ls.active_days,ls.percentile,ls.codex_tokens,ls.claude_tokens,ls.workbuddy_tokens,'collector-checked' trust_level,ls.generated_at FROM leaderboard_snapshots ls JOIN profiles p ON p.user_id=ls.user_id WHERE ls.period=?1 AND ls.source=?2 AND p.is_public=1 AND p.show_rank=1 ORDER BY ls.rank LIMIT ?3`).bind(period, source, limit).all<Record<string, unknown>>();
   const latestVisibleProfile = await db.prepare("SELECT MAX(updated_at) updated_at FROM profiles WHERE is_public=1 AND show_rank=1").first<{ updated_at: number | null }>();
   const snapshotGeneratedAt = Number(snapshot.results[0]?.generated_at || 0);
-  if (snapshot.results.length && snapshotGeneratedAt >= Number(latestVisibleProfile?.updated_at || 0)) return snapshot.results.map((row) => ({ rank: Number(row.rank), handle: String(row.handle), displayName: Boolean(row.is_anonymous) ? `Anonymous · ${String(row.handle).slice(-4).toUpperCase()}` : String(row.display_name), avatarUrl: row.avatar_url ? String(row.avatar_url) : null, isAnonymous: Boolean(row.is_anonymous), processedTokens: Number(row.processed_tokens), activeDays: Number(row.active_days), percentile: Number(row.percentile), codexTokens: Number(row.codex_tokens), claudeTokens: Number(row.claude_tokens), trustLevel: String(row.trust_level), showExactTokens: Boolean(row.show_exact_tokens), showAvatar: Boolean(row.show_avatar) }));
+  if (snapshot.results.length && snapshotGeneratedAt >= Number(latestVisibleProfile?.updated_at || 0)) return snapshot.results.map((row) => ({ rank: Number(row.rank), handle: String(row.handle), displayName: Boolean(row.is_anonymous) ? `Anonymous · ${String(row.handle).slice(-4).toUpperCase()}` : String(row.display_name), avatarUrl: row.avatar_url ? String(row.avatar_url) : null, isAnonymous: Boolean(row.is_anonymous), processedTokens: Number(row.processed_tokens), activeDays: Number(row.active_days), percentile: Number(row.percentile), codexTokens: Number(row.codex_tokens), claudeTokens: Number(row.claude_tokens), workbuddyTokens: Number(row.workbuddy_tokens), trustLevel: String(row.trust_level), showExactTokens: Boolean(row.show_exact_tokens), showAvatar: Boolean(row.show_avatar) }));
   const sourceFilter = source === "all" ? "" : "AND ud.source = ?3";
   const query = `
     WITH totals AS (
@@ -26,6 +26,7 @@ export async function getLeaderboard(period = "month", source = "all", limit = 1
         COUNT(DISTINCT ud.utc_date) AS active_days,
         SUM(CASE WHEN ud.source = 'codex' THEN ud.input_tokens_total + ud.output_tokens_total ELSE 0 END) AS codex_tokens,
         SUM(CASE WHEN ud.source = 'claude-code' THEN ud.input_tokens_total + ud.output_tokens_total ELSE 0 END) AS claude_tokens,
+        SUM(CASE WHEN ud.source = 'workbuddy' THEN ud.input_tokens_total + ud.output_tokens_total ELSE 0 END) AS workbuddy_tokens,
         MIN(ud.trust_level) AS trust_level
       FROM usage_daily ud
       JOIN profiles p ON p.user_id = ud.user_id
@@ -33,7 +34,7 @@ export async function getLeaderboard(period = "month", source = "all", limit = 1
       GROUP BY ud.user_id
     )
     SELECT p.handle, p.display_name, p.avatar_url, p.is_anonymous, p.show_exact_tokens, p.show_avatar,
-      t.processed_tokens, t.active_days, t.codex_tokens, t.claude_tokens, t.trust_level
+      t.processed_tokens, t.active_days, t.codex_tokens, t.claude_tokens, t.workbuddy_tokens, t.trust_level
     FROM totals t JOIN profiles p ON p.user_id = t.user_id
     ORDER BY t.processed_tokens DESC, t.active_days DESC, p.created_at ASC LIMIT ?2`;
   const statement = db.prepare(query);
@@ -51,6 +52,7 @@ export async function getLeaderboard(period = "month", source = "all", limit = 1
     percentile: total > 1 ? Math.max(0.1, ((index + 1) / total) * 100) : 1,
     codexTokens: Number(row.codex_tokens),
     claudeTokens: Number(row.claude_tokens),
+    workbuddyTokens: Number(row.workbuddy_tokens),
     trustLevel: String(row.trust_level),
     showExactTokens: Boolean(row.show_exact_tokens),
     showAvatar: Boolean(row.show_avatar),
@@ -75,9 +77,9 @@ export async function getLeaderboardPosition(userId: string, period = "month") {
 export async function getShareProfile(handle: string, period: "month" | "all") {
   const profile = await getPublicProfile(handle); if (!profile || period === "all") return profile;
   const db = await getD1(); if (!db) return null;
-  const row = await db.prepare(`SELECT COALESCE(SUM(input_tokens_total+output_tokens_total),0) processed_tokens,COUNT(DISTINCT utc_date) active_days,COALESCE(SUM(CASE WHEN source='codex' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) codex_tokens,COALESCE(SUM(CASE WHEN source='claude-code' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) claude_tokens FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.utc_date>=date('now','start of month') AND ud.quarantined=0 AND ud.trust_level!='imported'`).bind(handle).first<Record<string, unknown>>();
+  const row = await db.prepare(`SELECT COALESCE(SUM(input_tokens_total+output_tokens_total),0) processed_tokens,COUNT(DISTINCT utc_date) active_days,COALESCE(SUM(CASE WHEN source='codex' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) codex_tokens,COALESCE(SUM(CASE WHEN source='claude-code' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) claude_tokens,COALESCE(SUM(CASE WHEN source='workbuddy' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) workbuddy_tokens FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.utc_date>=date('now','start of month') AND ud.quarantined=0 AND ud.trust_level!='imported'`).bind(handle).first<Record<string, unknown>>();
   const board = await getLeaderboard("month", "all", 10_000); const rank = board.find((item) => item.handle === handle);
-  return { ...profile, processedTokens: Number(row?.processed_tokens || 0), activeDays: Number(row?.active_days || 0), codexTokens: Number(row?.codex_tokens || 0), claudeTokens: Number(row?.claude_tokens || 0), rank: rank?.rank || 0, percentile: rank?.percentile || 100 };
+  return { ...profile, processedTokens: Number(row?.processed_tokens || 0), activeDays: Number(row?.active_days || 0), codexTokens: Number(row?.codex_tokens || 0), claudeTokens: Number(row?.claude_tokens || 0), workbuddyTokens: Number(row?.workbuddy_tokens || 0), rank: rank?.rank || 0, percentile: rank?.percentile || 100 };
 }
 
 export async function getPublicProfile(handle: string): Promise<PublicProfile | null> {
@@ -91,6 +93,7 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
       COUNT(DISTINCT ud.utc_date) AS active_days,
       SUM(CASE WHEN ud.source='codex' THEN ud.input_tokens_total+ud.output_tokens_total ELSE 0 END) AS codex_tokens,
       SUM(CASE WHEN ud.source='claude-code' THEN ud.input_tokens_total+ud.output_tokens_total ELSE 0 END) AS claude_tokens,
+      SUM(CASE WHEN ud.source='workbuddy' THEN ud.input_tokens_total+ud.output_tokens_total ELSE 0 END) AS workbuddy_tokens,
       AVG(CASE WHEN ud.coverage='complete' THEN 100.0 ELSE 75.0 END) AS coverage,
       MIN(ud.trust_level) AS trust_level, date('now') AS today
     FROM profiles p JOIN usage_daily ud ON ud.user_id=p.user_id AND ud.quarantined=0 AND ud.trust_level!='imported'
@@ -118,6 +121,7 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
     percentile: found?.percentile ?? 100,
     codexTokens: Number(profile.codex_tokens),
     claudeTokens: Number(profile.claude_tokens),
+    workbuddyTokens: Number(profile.workbuddy_tokens),
     trustLevel: String(profile.trust_level),
     showExactTokens,
     showAvatar: Boolean(profile.show_avatar),

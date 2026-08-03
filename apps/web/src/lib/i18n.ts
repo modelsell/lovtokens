@@ -7,7 +7,7 @@ export function siteName(locale: Locale) {
 
 const zh: Record<string, string> = {
   "Your AI Token Portfolio": "你的 AI Token 档案",
-  "Privately count Codex and Claude Code tokens, join transparent usage leaderboards, and create shareable AI token certificates.": "在本地安全统计 Codex 与 Claude Code Token，参与透明的使用量排行榜，并生成可分享的 AI Token 证书。",
+  "Privately count Codex, Claude Code, and WorkBuddy tokens, join transparent usage leaderboards, and create shareable AI token certificates.": "在本地安全统计 Codex、Claude Code 与 WorkBuddy Token，参与透明的使用量排行榜，并生成可分享的 AI Token 证书。",
   "Count it. Rank it. Share it.": "统计。排名。分享。",
   "Private by design · Open collector": "隐私优先 · 开源采集器",
   "Turn your Codex and Claude Code activity into a private token portfolio, a transparent public rank, and a certificate worth sharing.": "把 Codex 与 Claude Code 的使用记录变成私人 Token 档案、透明公开排名，以及值得分享的证书。",
@@ -83,7 +83,7 @@ const zh: Record<string, string> = {
 
   "Collector docs · Node 20+": "采集器文档 · Node 20+",
   "One command, visible boundaries.": "一条命令，边界清晰。",
-  "Connect Codex and Claude Code usage from macOS, Linux, or Windows without uploading the conversations behind the count.": "在 macOS、Linux 或 Windows 上接入 Codex 与 Claude Code 使用量，无需上传统计数字背后的对话内容。",
+  "Connect Codex, Claude Code, and WorkBuddy usage from macOS, Linux, or Windows without uploading the conversations behind the count.": "在 macOS、Linux 或 Windows 上接入 Codex、Claude Code 与 WorkBuddy 使用量，无需上传统计数字背后的对话内容。",
   "Connect": "连接",
   "A browser opens with a one-time code. Create an account or sign in, approve that code, and the CLI performs its first scan.": "浏览器会打开并显示一次性代码。创建账号或登录并确认该代码后，CLI 会执行首次扫描。",
   "Inspect before upload": "上传前检查",
@@ -92,7 +92,7 @@ const zh: Record<string, string> = {
   "Rescan and replace absolute bucket values idempotently.": "重新扫描，并以幂等方式替换分桶绝对值。",
   "Show sources, coverage, last sync and connection.": "显示数据源、覆盖率、上次同步时间和连接状态。",
   "Open the latest public share card.": "打开最新的公开分享卡片。",
-  "Opt in to a 30-minute user-level task.": "启用每 30 分钟运行一次的用户级任务。",
+  "Opt in to an hourly user-level task with daily automatic updates.": "启用每小时运行一次、每天自动检查更新的用户级任务。",
   "Remove only the LovTokens task.": "仅移除 LovTokens 任务。",
   "Revoke this device and delete local credentials.": "撤销此设备并删除本地凭据。",
   "Data sources": "数据源",
@@ -112,7 +112,7 @@ const zh: Record<string, string> = {
 
   "Open methodology · Schema v1": "开放统计方法 · Schema v1",
   "The numbers have rules.": "每个数字都有规则。",
-  "A conservative, auditable counting model for two agent log formats—and an explicit line between usage and value.": "针对两种智能体日志格式的保守、可审计统计模型，并明确区分使用量与价值。",
+  "A conservative, auditable counting model for three agent log formats—and an explicit line between usage and value.": "针对三种智能体日志格式的保守、可审计统计模型，并明确区分使用量与价值。",
   "The headline metric": "核心指标",
   "Source adapters": "数据源适配",
   "Coverage": "覆盖率",

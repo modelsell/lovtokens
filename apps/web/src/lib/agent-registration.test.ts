@@ -22,7 +22,7 @@ describe("agent registration", () => {
     const handoff = agentRegistrationHandoff("https://lovtokens.example", "zh");
     expect(handoff).toContain("https://lovtokens.example/agent-register.md");
     expect(handoff).toContain("根据我当前的操作系统");
-    expect(handoff).toContain("Codex 和 Claude Code Token 用量");
+    expect(handoff).toContain("Codex、Claude Code 和 WorkBuddy Token 用量");
     expect(handoff.split("。").filter(Boolean)).toHaveLength(1);
     expect(handoff.length).toBeLessThan(220);
   });

@@ -1,7 +1,7 @@
 {
   "name": "lovtokens",
-  "version": "0.1.1",
-  "description": "Privacy-first Codex and Claude Code token collector for LovTokens",
+  "version": "0.1.3",
+  "description": "Privacy-first Codex, Claude Code, and WorkBuddy token collector for LovTokens",
   "license": "AGPL-3.0-only",
   "homepage": "https://github.com/modelsell/lovtokens#readme",
   "bugs": {
@@ -13,7 +13,7 @@
     "directory": "packages/collector"
   },
   "engines": { "node": ">=20.9.0" },
-  "keywords": ["codex", "claude-code", "tokens", "usage", "privacy"],
+  "keywords": ["codex", "claude-code", "workbuddy", "tokens", "usage", "privacy"],
   "publishConfig": { "access": "public" },
   "type": "module",
   "bin": {
