@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Download, X } from "lucide-react";
-import Image from "next/image";
+import { PngDownloadButton } from "./png-download-button";
 import { ShareCardPreview, type ShareCardPreviewProps, type ShareCardTheme } from "./share-card-preview";
+import { useRasterizedPng } from "@/lib/client-png";
+/* eslint-disable @next/next/no-img-element -- blob URLs point to browser-rasterized PNG files */
 
 const themeOptions: Array<{ key: ShareCardTheme; name: string }> = [
   { key: "obsidian", name: "Obsidian Lime" },
@@ -19,6 +21,13 @@ export function ShareThemeGallery({ downloadEnabled = true, ...preview }: Galler
   const [selectedTheme, setSelectedTheme] = useState<ShareCardTheme | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const selected = themeOptions.find((theme) => theme.key === selectedTheme) || null;
+  const imageSources = Object.fromEntries(themeOptions.map((theme) => [theme.key, `/share/${preview.handle}/profile.svg?theme=${theme.key}`])) as Record<ShareCardTheme, string>;
+  const pngUrls: Record<ShareCardTheme, string | null> = {
+    obsidian: useRasterizedPng(imageSources.obsidian, 1080, 1350),
+    terminal: useRasterizedPng(imageSources.terminal, 1080, 1350),
+    ivory: useRasterizedPng(imageSources.ivory, 1080, 1350),
+    aurora: useRasterizedPng(imageSources.aurora, 1080, 1350),
+  };
 
   useEffect(() => {
     if (!selectedTheme) return;
@@ -34,25 +43,24 @@ export function ShareThemeGallery({ downloadEnabled = true, ...preview }: Galler
   }, [selectedTheme]);
 
   return <><div className="share-theme-gallery">{themeOptions.map((theme) => {
-    const imageUrl = `/share/${preview.handle}/profile.png?theme=${theme.key}`;
     const previewLabel = `${locale === "zh" ? "放大预览" : "Enlarge preview"} ${theme.name}`;
     return <div className="share-theme-option" key={theme.key}>
       <button aria-label={previewLabel} className="share-theme-preview-button" onClick={() => setSelectedTheme(theme.key)} type="button">
-        {downloadEnabled
-          ? <Image alt={`${theme.name} ${locale === "zh" ? "竖版分享卡片" : "portrait share card"}`} className="share-theme-image" height={1350} src={imageUrl} unoptimized width={1080} />
+        {downloadEnabled && pngUrls[theme.key]
+          ? <img alt={`${theme.name} ${locale === "zh" ? "竖版分享卡片" : "portrait share card"}`} className="share-theme-image" height={1350} src={pngUrls[theme.key] || undefined} width={1080} />
           : <ShareCardPreview {...preview} theme={theme.key} />}
       </button>
       <span className="share-theme-meta"><span><strong>{theme.name}</strong><small>1080 × 1350 · PNG</small></span>{downloadEnabled
-        ? <a className="share-theme-download" download={`lovtokens-${preview.handle}-${theme.key}.png`} href={`${imageUrl}&download=1`}>{locale === "zh" ? "下载" : "Download"}<Download size={13} /></a>
+        ? <PngDownloadButton className="share-theme-download" filename={`lovtokens-${preview.handle}-${theme.key}.png`} loadingLabel={locale === "zh" ? "生成中" : "Generating"} sourceUrl={imageSources[theme.key]}>{locale === "zh" ? "下载" : "Download"}<Download size={13} /></PngDownloadButton>
         : <span>{locale === "zh" ? "公开后下载" : "Publish to download"}<Download size={13} /></span>}</span>
     </div>;
   })}</div>{selected && <div className="share-lightbox" onMouseDown={(event) => { if (event.currentTarget === event.target) setSelectedTheme(null); }}>
     <div aria-label={`${selected.name} ${locale === "zh" ? "放大预览" : "enlarged preview"}`} aria-modal="true" className="share-lightbox-dialog" role="dialog">
       <button aria-label={locale === "zh" ? "关闭预览" : "Close preview"} className="share-lightbox-close" onClick={() => setSelectedTheme(null)} ref={closeButtonRef} type="button"><X size={20} /></button>
       <div className="share-lightbox-card">{downloadEnabled
-        ? <Image alt={`${selected.name} ${locale === "zh" ? "竖版分享卡片放大预览" : "enlarged portrait share card"}`} className="share-lightbox-image" height={1350} priority src={`/share/${preview.handle}/profile.png?theme=${selected.key}`} unoptimized width={1080} />
+        && pngUrls[selected.key] ? <img alt={`${selected.name} ${locale === "zh" ? "竖版分享卡片放大预览" : "enlarged portrait share card"}`} className="share-lightbox-image" height={1350} src={pngUrls[selected.key] || undefined} width={1080} />
         : <ShareCardPreview {...preview} theme={selected.key} />}</div>
-      <div className="share-lightbox-foot"><span><strong>{selected.name}</strong><small>1080 × 1350 · PNG</small></span>{downloadEnabled && <a download={`lovtokens-${preview.handle}-${selected.key}.png`} href={`/share/${preview.handle}/profile.png?theme=${selected.key}&download=1`}>{locale === "zh" ? "下载图片" : "Download image"}<Download size={14} /></a>}</div>
+      <div className="share-lightbox-foot"><span><strong>{selected.name}</strong><small>1080 × 1350 · PNG</small></span>{downloadEnabled && <PngDownloadButton filename={`lovtokens-${preview.handle}-${selected.key}.png`} loadingLabel={locale === "zh" ? "生成中" : "Generating"} sourceUrl={imageSources[selected.key]}>{locale === "zh" ? "下载图片" : "Download image"}<Download size={14} /></PngDownloadButton>}</div>
     </div>
   </div>}</>;
 }

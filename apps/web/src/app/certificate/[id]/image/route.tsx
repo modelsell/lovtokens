@@ -1,5 +1,5 @@
 import QRCode from "qrcode";
-import { ImageResponse } from "next/og";
+import { renderToStaticMarkup } from "react-dom/server.browser";
 import { CertificateImage, type AchievementCardStyle } from "@/components/certificate-image";
 import { getSession } from "@/lib/auth";
 import { verifyPayload } from "@/lib/crypto";
@@ -7,6 +7,7 @@ import type { Locale } from "@/lib/i18n";
 import { localePath } from "@/lib/i18n";
 import { getCertificate } from "@/lib/repository";
 import { getRuntimeEnv, siteUrl } from "@/lib/runtime";
+import { svgImageDocument } from "@/lib/svg-image";
 
 export const runtime = "nodejs";
 
@@ -26,13 +27,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const qr = await QRCode.toDataURL(proofUrl, { errorCorrectionLevel: "M", margin: 2, width: 220, color: { dark: "#111827", light: "#ffffff" } });
   const env = await getRuntimeEnv();
   const proof = await verifyPayload(certificate.payloadJson, certificate.payloadHash, certificate.signature, env.CERTIFICATE_PRIVATE_JWK);
-  const image = await new ImageResponse(<CertificateImage certificate={certificate} locale={locale} proof={proof} qr={qr} style={style} />, { width: 1080, height: 1350 }).arrayBuffer();
-  const filename = `lovtokens-achievement-${certificate.id.replace(/[^a-zA-Z0-9_-]/g, "-")}.png`;
+  const markup = renderToStaticMarkup(<CertificateImage certificate={certificate} locale={locale} proof={proof} qr={qr} style={style} />);
+  const image = svgImageDocument(markup, 1080, 1350);
+  const filename = `lovtokens-achievement-${certificate.id.replace(/[^a-zA-Z0-9_-]/g, "-")}.svg`;
   const download = url.searchParams.get("download") === "1";
 
   return new Response(image, { headers: {
     "cache-control": publiclyViewable ? "public,max-age=86400,stale-while-revalidate=604800" : "private,no-store",
     "content-disposition": `${download ? "attachment" : "inline"}; filename="${filename}"`,
-    "content-type": "image/png",
+    "content-type": "image/svg+xml; charset=utf-8",
   } });
 }

@@ -1,7 +1,13 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ShareThemeGallery } from "./share-theme-gallery";
+
+vi.mock("@/lib/client-png", () => ({
+  rasterizeSvgToPng: vi.fn(async () => new Blob(["png"], { type: "image/png" })),
+  triggerPngDownload: vi.fn(),
+  useRasterizedPng: vi.fn((source: string) => `blob:png-${source}`),
+}));
 
 afterEach(cleanup);
 
@@ -9,7 +15,7 @@ describe("ShareThemeGallery", () => {
   it("shows four portrait themes linked to the matching generated image", () => {
     const { container } = render(<ShareThemeGallery handle="jie" locale="zh" />);
     expect(container.querySelectorAll(".share-theme-image")).toHaveLength(4);
-    expect(screen.getByText("Obsidian Lime").closest(".share-theme-option")?.querySelector("a")).toHaveAttribute("href", "/share/jie/profile.png?theme=obsidian&download=1");
+    expect(screen.getByText("Obsidian Lime").closest(".share-theme-option")?.querySelector("button.share-theme-download")).toBeInTheDocument();
     expect(screen.getAllByText("1080 × 1350 · PNG")).toHaveLength(4);
   });
 

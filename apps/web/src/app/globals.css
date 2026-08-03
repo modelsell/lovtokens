@@ -186,6 +186,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .share-theme-meta strong { font-size: 11px; }
 .share-theme-meta small { color: var(--muted); font-size: 8px; letter-spacing: .05em; }
 .share-theme-meta > span:last-child { align-items: center; color: var(--muted); display: flex; font-size: 9px; font-weight: 800; gap: 5px; text-transform: uppercase; }
+.share-theme-download { align-items: center; background: transparent; border: 0; color: var(--muted); cursor: pointer; display: flex; font-size: 9px; font-weight: 800; gap: 5px; padding: 0; text-transform: uppercase; }
 .share-theme-download:hover { color: var(--ink); }
 .share-lightbox { align-items: center; background: rgba(6,9,7,.88); display: flex; inset: 0; justify-content: center; padding: 28px; position: fixed; z-index: 100; backdrop-filter: blur(14px); }
 .share-lightbox-dialog { display: grid; max-height: calc(100vh - 56px); max-width: min(92vw, 680px); position: relative; width: 100%; }
@@ -197,7 +198,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .share-lightbox-foot > span { display: grid; gap: 3px; }
 .share-lightbox-foot strong { font-size: 12px; }
 .share-lightbox-foot small { color: var(--muted); font-size: 9px; }
-.share-lightbox-foot a { align-items: center; display: flex; font-size: 10px; font-weight: 850; gap: 6px; text-transform: uppercase; }
+.share-lightbox-foot a, .share-lightbox-foot button { align-items: center; background: transparent; border: 0; cursor: pointer; display: flex; font-size: 10px; font-weight: 850; gap: 6px; padding: 0; text-transform: uppercase; }
 
 .stats-band { background: var(--dark); color: white; }
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
