@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { BadgeCheck } from "lucide-react";
+import { ArrowRight, BadgeCheck, Trophy } from "lucide-react";
 import { notFound } from "next/navigation";
 import { ActivityBreakdown } from "@/components/activity-breakdown";
 import { JsonLd } from "@/components/json-ld";
@@ -12,18 +12,20 @@ import { getPublicProfile } from "@/lib/repository";
 import { siteUrl } from "@/lib/runtime";
 import { languageAlternates, localePath } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
+import { getViewer } from "@/lib/viewer";
 
 export const revalidate = 600;
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
   const locale = await getLocale(); const { handle } = await params; const p = await getPublicProfile(handle);
   if (!p) return { title: locale === "zh" ? "私密或不存在的档案" : "Private or missing profile", robots: { index: false, follow: false } };
   const publicTotal = p.showExactTokens ? formatTokenCount(p.processedTokens) : locale === "zh" ? "私密总量" : "a private total";
-  return { title: locale === "zh" ? `${p.displayName} 的 AI Token 档案` : `${p.displayName}'s AI Token Portfolio`, description: locale === "zh" ? `${p.displayName} 在 Codex 与 Claude Code 中已处理 ${publicTotal}。` : `${p.displayName} has processed ${publicTotal} across Codex and Claude Code.`, alternates: languageAlternates(`/u/${p.handle}`, locale), openGraph: { images: [`/share/${p.handle}/profile.svg?theme=obsidian`] } };
+  return { title: locale === "zh" ? `${p.displayName} 的 AI Token 档案` : `${p.displayName}'s AI Token Portfolio`, description: locale === "zh" ? `${p.displayName} 在 Codex 与 Claude Code 中已处理 ${publicTotal}。` : `${p.displayName} has processed ${publicTotal} across Codex and Claude Code.`, alternates: languageAlternates(`/u/${p.handle}`, locale), openGraph: { images: [`/share/${p.handle}/profile.png?theme=obsidian`] } };
 }
 
 export default async function ProfilePage({ params }: { params: Promise<{ handle: string }> }) {
   const locale = await getLocale();
-  const { handle } = await params; const p = await getPublicProfile(handle); if (!p) notFound();
+  const { handle } = await params; const [p, viewer] = await Promise.all([getPublicProfile(handle), getViewer()]); if (!p) notFound();
+  const isOwner = viewer?.profile?.handle === p.handle;
   const displayTotal = p.showExactTokens ? formatTokenCount(p.processedTokens) : locale === "zh" ? "总量私密" : "Private total";
   const codexShare = Math.round((p.codexTokens / Math.max(1, p.processedTokens)) * 100);
   return <>
@@ -35,7 +37,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ handle
         <article className="panel"><div className="panel-head"><h2>{locale === "zh" ? "智能体分布" : "Agent breakdown"}</h2></div>{p.showExactTokens ? <ActivityBreakdown rows={p.sources.map((row) => ({ label: sourceLabel(row.source), tokens: row.tokens }))} /> : <p className="form-message">{locale === "zh" ? "智能体精确用量为私密数据。" : "Exact agent usage is private."}</p>}</article>
         <article className="panel"><div className="panel-head"><h2>{locale === "zh" ? "常用模型" : "Top models"}</h2></div>{p.showExactTokens && p.showModels ? <ActivityBreakdown rows={p.models.map((row) => ({ label: row.model, tokens: row.tokens }))} /> : <p className="form-message">{p.showModels ? (locale === "zh" ? "模型精确用量为私密数据。" : "Exact model usage is private.") : (locale === "zh" ? "模型已隐藏。" : "Models are hidden.")}</p>}</article>
       </div>
-      <article className="panel profile-share"><div className="panel-head"><h2>{locale === "zh" ? "分享此档案" : "Share this portfolio"}</h2><span>{achievementFor(p.processedTokens, p.activeDays, p.codexTokens, p.claudeTokens, locale)}</span></div><ShareThemeGallery activeDays={p.activeDays} claudeTokens={p.claudeTokens} codexTokens={p.codexTokens} displayName={p.displayName} handle={p.handle} history={p.history} locale={locale} models={p.models} percentile={p.percentile} rank={p.rank} showExactTokens={p.showExactTokens} showRank={p.showRank} sources={p.sources} tokens={p.processedTokens} /><div className="share-gallery-foot"><LocaleLink href={localePath("/methodology", locale)} locale={locale}>{locale === "zh" ? "了解统计方式" : "How this is measured"}</LocaleLink></div></article>
+      {isOwner ? <article className="panel profile-share"><div className="panel-head"><h2>{locale === "zh" ? "分享此档案" : "Share this portfolio"}</h2><span>{achievementFor(p.processedTokens, p.activeDays, p.codexTokens, p.claudeTokens, locale)}</span></div><ShareThemeGallery activeDays={p.activeDays} claudeTokens={p.claudeTokens} codexTokens={p.codexTokens} displayName={p.displayName} handle={p.handle} history={p.history} locale={locale} models={p.models} percentile={p.percentile} rank={p.rank} showExactTokens={p.showExactTokens} showRank={p.showRank} sources={p.sources} tokens={p.processedTokens} /><div className="share-gallery-foot"><LocaleLink href={localePath("/methodology", locale)} locale={locale}>{locale === "zh" ? "了解统计方式" : "How this is measured"}</LocaleLink></div></article> : <LocaleLink className="profile-rank-cta" href={localePath("/", locale)} locale={locale}><span className="profile-rank-cta-icon"><Trophy size={34} /></span><span className="profile-rank-cta-copy"><small className="eyebrow">{locale === "zh" ? "你的使用量，也能被看见" : "MAKE YOUR USAGE VISIBLE"}</small><strong>{locale === "zh" ? "你也来加入排名。" : "Join the leaderboard."}</strong><span>{locale === "zh" ? "连接 Codex 或 Claude Code，只同步每日汇总用量，生成你的个人趋势与可选公开排名。" : "Connect Codex or Claude Code, sync daily aggregates only, and build your own trends and optional public rank."}</span></span><span className="profile-rank-cta-action">{locale === "zh" ? "前往首页开始统计" : "Start from the homepage"}<ArrowRight size={18} /></span></LocaleLink>}
     </section>
     <JsonLd data={{ "@context": "https://schema.org", "@type": "ProfilePage", url: `${siteUrl()}/u/${p.handle}`, mainEntity: { "@type": "Person", name: p.displayName, identifier: p.isAnonymous ? undefined : p.handle }, description: "A public, user-controlled AI coding token activity profile." }} />
   </>;

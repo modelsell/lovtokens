@@ -1,13 +1,12 @@
 import QRCode from "qrcode";
-import { renderToStaticMarkup } from "react-dom/server.browser";
+import { ImageResponse } from "next/og";
 import { achievementFor, formatTokenCount } from "@/lib/format";
 import { getShareProfile } from "@/lib/repository";
 import { getShareBucket, siteUrl } from "@/lib/runtime";
-import { svgImageDocument } from "@/lib/svg-image";
-/* eslint-disable @next/next/no-img-element -- the server-rendered SVG embeds the QR data URI directly */
+/* eslint-disable @next/next/no-img-element -- ImageResponse embeds the QR data URI in the generated PNG */
 
 export const runtime = "nodejs";
-const sizes = { "profile.svg": [1080, 1350], "month.svg": [1200, 630], "lifetime-square.svg": [1080, 1080], "story.svg": [1080, 1920], "certificate.svg": [1600, 900] } as const;
+const sizes = { "profile.png": [1080, 1350], "month.png": [1200, 630], "lifetime-square.png": [1080, 1080], "story.png": [1080, 1920], "certificate.png": [1600, 900] } as const;
 const themes = {
   obsidian: { background: "#090c0a", accent: "#c8f06a", foreground: "#f6f7f3", pattern: "linear-gradient(rgba(200,240,106,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(200,240,106,.18) 1px,transparent 1px)" },
   terminal: { background: "linear-gradient(145deg,#06101d,#071c28)", accent: "#62d6ff", foreground: "#f3f7ff", pattern: "linear-gradient(rgba(98,214,255,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(98,214,255,.18) 1px,transparent 1px)" },
@@ -16,15 +15,17 @@ const themes = {
 } as const;
 
 export async function GET(request: Request, { params }: { params: Promise<{ handle: string; variant: string }> }) {
-  const { handle, variant } = await params; const normalizedVariant = variant.endsWith(".png") ? `${variant.slice(0, -4)}.svg` : variant; const size = sizes[normalizedVariant as keyof typeof sizes]; if (!size) return new Response("Unknown image format", { status: 404 });
+  const { handle, variant } = await params; const normalizedVariant = variant.endsWith(".svg") ? `${variant.slice(0, -4)}.png` : variant; const size = sizes[normalizedVariant as keyof typeof sizes]; if (!size) return new Response("Unknown image format", { status: 404 });
   const url = new URL(request.url); const theme = (url.searchParams.get("theme") || "obsidian") as keyof typeof themes; if (!themes[theme]) return new Response("Unknown theme", { status: 400 });
-  const period = normalizedVariant === "month.svg" ? "month" : "all"; const p = await getShareProfile(handle, period); if (!p) return new Response("Profile is private or missing", { status: 404 });
-  const cacheKey = `v8/${p.handle}/${p.statsVersion}-${p.privacyVersion}/${period}/${normalizedVariant}/${theme}.svg`; const bucket = await getShareBucket(); const cached = await bucket?.get(cacheKey); if (cached) return new Response(cached.body, { headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public,max-age=31536000,immutable", etag: cached.httpEtag } });
+  const period = normalizedVariant === "month.png" ? "month" : "all"; const p = await getShareProfile(handle, period); if (!p) return new Response("Profile is private or missing", { status: 404 });
+  const download = url.searchParams.get("download") === "1"; const safeHandle = p.handle.replace(/[^a-zA-Z0-9_-]/g, "-"); const filename = `lovtokens-${safeHandle}-${normalizedVariant.replace(".png", "")}-${theme}.png`;
+  const responseHeaders = { "content-type": "image/png", "cache-control": "public,max-age=31536000,immutable", "content-disposition": `${download ? "attachment" : "inline"}; filename="${filename}"` };
+  const cacheKey = `v9/${p.handle}/${p.statsVersion}-${p.privacyVersion}/${period}/${normalizedVariant}/${theme}.png`; const bucket = await getShareBucket(); const cached = await bucket?.get(cacheKey); if (cached) return new Response(cached.body, { headers: { ...responseHeaders, etag: cached.httpEtag } });
   const { background, accent, foreground, pattern } = themes[theme]; const profileUrl = `${siteUrl()}/u/${p.handle}`; const qr = await QRCode.toDataURL(profileUrl, { errorCorrectionLevel: "M", margin: 3, width: 280, color: { dark: "#111611", light: "#ffffff" } });
   const cardProps = { p, background, accent, foreground, pattern, qr, theme };
-  const markup = renderToStaticMarkup(normalizedVariant === "profile.svg" ? <PortraitCard {...cardProps} /> : <LegacyCard {...cardProps} period={period} tall={size[1] > size[0]} />);
-  const image = svgImageDocument(markup, size[0], size[1]); await bucket?.put(cacheKey, image, { httpMetadata: { contentType: "image/svg+xml", cacheControl: "public,max-age=31536000,immutable" } });
-  return new Response(image, { headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public,max-age=31536000,immutable" } });
+  const card = normalizedVariant === "profile.png" ? <PortraitCard {...cardProps} /> : <LegacyCard {...cardProps} period={period} tall={size[1] > size[0]} />;
+  const image = await new ImageResponse(card, { width: size[0], height: size[1] }).arrayBuffer(); await bucket?.put(cacheKey, image, { httpMetadata: { contentType: "image/png", cacheControl: "public,max-age=31536000,immutable" } });
+  return new Response(image, { headers: responseHeaders });
 }
 function Metric({ label, value }: { label: string; value: string }) { return <div style={{ display: "flex", flexDirection: "column", gap: 7 }}><span style={{ fontSize: 14, letterSpacing: 3, opacity: .58 }}>{label}</span><strong style={{ fontSize: 40 }}>{value}</strong></div>; }
 

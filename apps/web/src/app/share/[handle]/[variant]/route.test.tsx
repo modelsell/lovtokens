@@ -44,18 +44,18 @@ import { GET } from "./route";
 
 describe("portrait share image", () => {
   it.each(["obsidian", "terminal", "ivory", "aurora"])("renders the 1080 × 1350 profile card for the %s theme", async (theme) => {
-    const response = await GET(new Request(`https://lovtokens.test/share/portrait-builder/profile.svg?theme=${theme}`), {
-      params: Promise.resolve({ handle: "portrait-builder", variant: "profile.svg" }),
+    const response = await GET(new Request(`https://lovtokens.test/share/portrait-builder/profile.png?theme=${theme}&download=1`), {
+      params: Promise.resolve({ handle: "portrait-builder", variant: "profile.png" }),
     });
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toContain("image/svg+xml");
-    const svg = await response.text();
-    expect(svg.length).toBeGreaterThan(1_000);
-    expect(svg).toContain('width="1080" height="1350"');
-    expect(svg).toContain("ALL-TIME TOKEN PORTFOLIO");
-    expect(svg).toContain('data-share-layout="portrait-v2"');
-    expect(svg).toContain('alt="Profile QR code"');
-    expect(svg).toContain('width="224" height="224"');
+    expect(response.headers.get("content-type")).toBe("image/png");
+    expect(response.headers.get("content-disposition")).toContain("attachment");
+    const image = new Uint8Array(await response.arrayBuffer());
+    expect(image.byteLength).toBeGreaterThan(20_000);
+    expect(Array.from(image.slice(0, 8))).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+    const view = new DataView(image.buffer, image.byteOffset, image.byteLength);
+    expect(view.getUint32(16)).toBe(1080);
+    expect(view.getUint32(20)).toBe(1350);
   }, 20_000);
 });
