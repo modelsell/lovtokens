@@ -34,7 +34,7 @@ export function ShareThemeGallery({ downloadEnabled = true, ...preview }: Galler
   }, [selectedTheme]);
 
   return <><div className="share-theme-gallery">{themeOptions.map((theme) => {
-    const imageUrl = `/share/${preview.handle}/profile.png?theme=${theme.key}`;
+    const imageUrl = `/share/${preview.handle}/profile.svg?theme=${theme.key}`;
     const previewLabel = `${locale === "zh" ? "放大预览" : "Enlarge preview"} ${theme.name}`;
     return <div className="share-theme-option" key={theme.key}>
       <button aria-label={previewLabel} className="share-theme-preview-button" onClick={() => setSelectedTheme(theme.key)} type="button">
@@ -50,9 +50,9 @@ export function ShareThemeGallery({ downloadEnabled = true, ...preview }: Galler
     <div aria-label={`${selected.name} ${locale === "zh" ? "放大预览" : "enlarged preview"}`} aria-modal="true" className="share-lightbox-dialog" role="dialog">
       <button aria-label={locale === "zh" ? "关闭预览" : "Close preview"} className="share-lightbox-close" onClick={() => setSelectedTheme(null)} ref={closeButtonRef} type="button"><X size={20} /></button>
       <div className="share-lightbox-card">{downloadEnabled
-        ? <Image alt={`${selected.name} ${locale === "zh" ? "竖版分享卡片放大预览" : "enlarged portrait share card"}`} className="share-lightbox-image" height={1350} priority src={`/share/${preview.handle}/profile.png?theme=${selected.key}`} unoptimized width={1080} />
+        ? <Image alt={`${selected.name} ${locale === "zh" ? "竖版分享卡片放大预览" : "enlarged portrait share card"}`} className="share-lightbox-image" height={1350} priority src={`/share/${preview.handle}/profile.svg?theme=${selected.key}`} unoptimized width={1080} />
         : <ShareCardPreview {...preview} theme={selected.key} />}</div>
-      <div className="share-lightbox-foot"><span><strong>{selected.name}</strong><small>1080 × 1350 · PNG</small></span>{downloadEnabled && <a download href={`/share/${preview.handle}/profile.png?theme=${selected.key}`}>{locale === "zh" ? "下载图片" : "Download image"}<Download size={14} /></a>}</div>
+      <div className="share-lightbox-foot"><span><strong>{selected.name}</strong><small>1080 × 1350 · SVG</small></span>{downloadEnabled && <a download href={`/share/${preview.handle}/profile.svg?theme=${selected.key}`}>{locale === "zh" ? "下载图片" : "Download image"}<Download size={14} /></a>}</div>
     </div>
   </div>}</>;
 }

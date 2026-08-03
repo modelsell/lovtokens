@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
   const locale = await getLocale(); const { handle } = await params; const p = await getPublicProfile(handle);
   if (!p) return { title: locale === "zh" ? "私密或不存在的档案" : "Private or missing profile", robots: { index: false, follow: false } };
   const publicTotal = p.showExactTokens ? formatTokenCount(p.processedTokens) : locale === "zh" ? "私密总量" : "a private total";
-  return { title: locale === "zh" ? `${p.displayName} 的 AI Token 档案` : `${p.displayName}'s AI Token Portfolio`, description: locale === "zh" ? `${p.displayName} 在 Codex 与 Claude Code 中已处理 ${publicTotal}。` : `${p.displayName} has processed ${publicTotal} across Codex and Claude Code.`, alternates: languageAlternates(`/u/${p.handle}`, locale), openGraph: { images: [`/share/${p.handle}/profile.png?theme=obsidian`] } };
+  return { title: locale === "zh" ? `${p.displayName} 的 AI Token 档案` : `${p.displayName}'s AI Token Portfolio`, description: locale === "zh" ? `${p.displayName} 在 Codex 与 Claude Code 中已处理 ${publicTotal}。` : `${p.displayName} has processed ${publicTotal} across Codex and Claude Code.`, alternates: languageAlternates(`/u/${p.handle}`, locale), openGraph: { images: [`/share/${p.handle}/profile.svg?theme=obsidian`] } };
 }
 
 export default async function ProfilePage({ params }: { params: Promise<{ handle: string }> }) {

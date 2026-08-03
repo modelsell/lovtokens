@@ -44,16 +44,15 @@ import { GET } from "./route";
 
 describe("portrait share image", () => {
   it.each(["obsidian", "terminal", "ivory", "aurora"])("renders the 1080 × 1350 profile card for the %s theme", async (theme) => {
-    const response = await GET(new Request(`https://lovtokens.test/share/portrait-builder/profile.png?theme=${theme}`), {
-      params: Promise.resolve({ handle: "portrait-builder", variant: "profile.png" }),
+    const response = await GET(new Request(`https://lovtokens.test/share/portrait-builder/profile.svg?theme=${theme}`), {
+      params: Promise.resolve({ handle: "portrait-builder", variant: "profile.svg" }),
     });
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toBe("image/png");
-    const png = await response.arrayBuffer();
-    const header = new DataView(png);
-    expect(png.byteLength).toBeGreaterThan(1_000);
-    expect(header.getUint32(16)).toBe(1080);
-    expect(header.getUint32(20)).toBe(1350);
+    expect(response.headers.get("content-type")).toContain("image/svg+xml");
+    const svg = await response.text();
+    expect(svg.length).toBeGreaterThan(1_000);
+    expect(svg).toContain('width="1080" height="1350"');
+    expect(svg).toContain("ALL-TIME TOKEN PORTFOLIO");
   }, 20_000);
 });

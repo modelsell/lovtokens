@@ -16,6 +16,44 @@ export async function getDashboardDetails(userId: string) {
 export async function getDevices(userId: string) { const db = await getD1(); if (!db) return []; const r = await db.prepare("SELECT id,name,status,last_synced_at,created_at FROM devices WHERE user_id=?1 ORDER BY created_at DESC").bind(userId).all<Record<string, unknown>>(); return r.results; }
 export async function getCertificatesForUser(userId: string) { const db = await getD1(); if (!db) return []; const r = await db.prepare("SELECT id,kind,period,processed_tokens,rank,percentile,coverage,trust_level,status,issued_at FROM certificates WHERE user_id=?1 ORDER BY issued_at DESC").bind(userId).all<Record<string, unknown>>(); return r.results; }
 
+export async function getAchievementMetrics(userId: string) {
+  const db = await getD1();
+  if (!db) return null;
+  const [aggregate, daily] = await Promise.all([
+    db.prepare(`SELECT
+      COALESCE(SUM(CASE WHEN source='codex' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) codex_tokens,
+      COALESCE(SUM(CASE WHEN source='claude-code' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) claude_tokens,
+      COALESCE(SUM(cache_read_tokens),0) cache_tokens,
+      COUNT(DISTINCT CASE WHEN model<>'' THEN model END) model_count,
+      COUNT(DISTINCT utc_date) active_days,
+      COUNT(DISTINCT CASE WHEN strftime('%w',utc_date) IN ('0','6') THEN utc_date END) weekend_days,
+      COALESCE(SUM(CASE WHEN CAST(strftime('%H',first_event_at) AS INTEGER)>=22 OR CAST(strftime('%H',first_event_at) AS INTEGER)<5 THEN input_tokens_total+output_tokens_total ELSE 0 END),0) night_tokens
+      FROM usage_daily WHERE user_id=?1 AND quarantined=0`).bind(userId).first<Record<string, unknown>>(),
+    db.prepare("SELECT utc_date date,SUM(input_tokens_total+output_tokens_total) tokens FROM usage_daily WHERE user_id=?1 AND quarantined=0 GROUP BY utc_date ORDER BY utc_date").bind(userId).all<{ date: string; tokens: number }>(),
+  ]);
+  const dates = daily.results.map((row) => row.date);
+  let longestStreak = 0;
+  let streak = 0;
+  let previous = Number.NaN;
+  for (const date of dates) {
+    const current = Date.parse(`${date}T00:00:00.000Z`);
+    streak = current - previous === 86_400_000 ? streak + 1 : 1;
+    longestStreak = Math.max(longestStreak, streak);
+    previous = current;
+  }
+  return {
+    codexTokens: Number(aggregate?.codex_tokens || 0),
+    claudeTokens: Number(aggregate?.claude_tokens || 0),
+    cacheTokens: Number(aggregate?.cache_tokens || 0),
+    modelCount: Number(aggregate?.model_count || 0),
+    activeDays: Number(aggregate?.active_days || 0),
+    weekendDays: Number(aggregate?.weekend_days || 0),
+    nightTokens: Number(aggregate?.night_tokens || 0),
+    maxDailyTokens: Math.max(0, ...daily.results.map((row) => Number(row.tokens))),
+    longestStreak,
+  };
+}
+
 export async function getAccountSecurityInfo(userId: string, currentSessionId: string) {
   const db = await getD1(); if (!db) return { providers: [], sessions: [] };
   const [accounts, sessions] = await Promise.all([

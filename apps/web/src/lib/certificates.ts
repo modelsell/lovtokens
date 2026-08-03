@@ -1,12 +1,12 @@
 import { signPayload } from "./crypto";
 import { getD1, getRuntimeEnv } from "./runtime";
 
-const milestones = [1_000_000, 10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000];
+export const MILESTONE_THRESHOLDS = [1_000_000, 10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000] as const;
 export async function issueEligibleCertificates(userId: string) {
   const db = await getD1(); if (!db) return; const env = await getRuntimeEnv(); const now = Math.floor(Date.now() / 1000);
   const stats = await db.prepare(`SELECT p.handle,p.display_name,COALESCE(SUM(ud.input_tokens_total+ud.output_tokens_total),0) total,AVG(CASE WHEN ud.coverage='complete' THEN 100.0 ELSE 75.0 END) coverage,MIN(ud.trust_level) trust_level FROM profiles p LEFT JOIN usage_daily ud ON ud.user_id=p.user_id AND ud.quarantined=0 WHERE p.user_id=?1 GROUP BY p.user_id`).bind(userId).first<Record<string, unknown>>(); if (!stats) return;
   const lifetimeRank = await rankForRange(db, userId, "0000-01-01");
-  for (const threshold of milestones) if (Number(stats.total) >= threshold) await issue(db, { userId, kind: "milestone", period: String(threshold), processedTokens: threshold, coverage: Number(stats.coverage || 0), trustLevel: String(stats.trust_level || "collector-checked"), displayName: String(stats.display_name), handle: String(stats.handle), issuedAt: now, ...lifetimeRank }, env.CERTIFICATE_PRIVATE_JWK);
+  for (const threshold of MILESTONE_THRESHOLDS) if (Number(stats.total) >= threshold) await issue(db, { userId, kind: "milestone", period: String(threshold), processedTokens: threshold, coverage: Number(stats.coverage || 0), trustLevel: String(stats.trust_level || "collector-checked"), displayName: String(stats.display_name), handle: String(stats.handle), issuedAt: now, ...lifetimeRank }, env.CERTIFICATE_PRIVATE_JWK);
   const current = new Date(); const previousEnd = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), 0)); const period = previousEnd.toISOString().slice(0, 7); const start = `${period}-01`; const next = new Date(Date.UTC(previousEnd.getUTCFullYear(), previousEnd.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
   const monthly = await db.prepare("SELECT COALESCE(SUM(input_tokens_total+output_tokens_total),0) total,AVG(CASE WHEN coverage='complete' THEN 100.0 ELSE 75.0 END) coverage,MIN(trust_level) trust_level FROM usage_daily WHERE user_id=?1 AND utc_date>=?2 AND utc_date<?3 AND quarantined=0").bind(userId, start, next).first<Record<string, unknown>>();
   if (Number(monthly?.total || 0) > 0) { const monthlyRank = await rankForRange(db, userId, start, next); await issue(db, { userId, kind: "monthly", period, processedTokens: Number(monthly?.total), coverage: Number(monthly?.coverage || 0), trustLevel: String(monthly?.trust_level || "collector-checked"), displayName: String(stats.display_name), handle: String(stats.handle), issuedAt: now, ...monthlyRank }, env.CERTIFICATE_PRIVATE_JWK); }

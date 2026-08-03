@@ -1,14 +1,17 @@
 import { formatTokenCount } from "@/lib/format";
 import type { CertificateRecord } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
-/* eslint-disable @next/next/no-img-element -- next/og requires a directly renderable QR data URI */
+/* eslint-disable @next/next/no-img-element -- the server-rendered SVG embeds the QR data URI directly */
 
 type Props = {
   certificate: CertificateRecord;
   locale: Locale;
   proof: "invalid" | "hash-verified" | "signature-verified";
   qr: string;
+  style?: AchievementCardStyle;
 };
+
+export type AchievementCardStyle = "collector" | "archive";
 
 type CardTheme = {
   code: string;
@@ -42,7 +45,11 @@ export function achievementCardThemeFor(kind: string, processedTokens: number) {
   return kind === "monthly" ? monthlyTheme : milestoneThemes.find(({ minimum }) => processedTokens >= minimum)!.theme;
 }
 
-export function CertificateImage({ certificate: c, locale, proof, qr }: Props) {
+export function CertificateImage(props: Props) {
+  return props.style === "archive" ? <ArchiveCertificateImage {...props} /> : <CollectorCertificateImage {...props} />;
+}
+
+function CollectorCertificateImage({ certificate: c, locale, proof, qr }: Props) {
   const monthly = c.kind === "monthly";
   const revoked = c.status !== "active";
   const theme = achievementCardThemeFor(c.kind, c.processedTokens);
@@ -101,6 +108,81 @@ export function CertificateImage({ certificate: c, locale, proof, qr }: Props) {
     </footer>
     {revoked && <div style={{ border: "7px solid #cf4e45", color: "#cf4e45", display: "flex", fontSize: 60, fontWeight: 900, left: 320, padding: "14px 26px", position: "absolute", top: 590, transform: "rotate(-12deg)" }}>{locale === "zh" ? "已撤销" : "REVOKED"}</div>}
   </div>;
+}
+
+function ArchiveCertificateImage({ certificate: c, locale, proof, qr }: Props) {
+  const monthly = c.kind === "monthly";
+  const revoked = c.status !== "active";
+  const theme = achievementCardThemeFor(c.kind, c.processedTokens);
+  const accent = archiveAccentFor(theme.code);
+  const title = monthly
+    ? (locale === "zh" ? `${c.period} 月度成就` : `${c.period} Monthly Achievement`)
+    : (locale === "zh" ? `${formatTokenCount(c.processedTokens)} Token 里程碑` : `${formatTokenCount(c.processedTokens)} Token Milestone`);
+  const proofLabel = proof === "signature-verified"
+    ? (locale === "zh" ? "签名与数据完整性已验证" : "Signature and data integrity verified")
+    : proof === "hash-verified"
+      ? (locale === "zh" ? "数据完整性已验证" : "Data integrity verified")
+      : (locale === "zh" ? "验真失败" : "Verification failed");
+  const issued = new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", {
+    day: "numeric", month: "short", year: "numeric",
+  }).format(new Date(c.issuedAt * 1000));
+
+  return <div style={{ background: "#f1ecdf", color: "#172033", display: "flex", flexDirection: "column", fontFamily: "Arial, sans-serif", height: "100%", overflow: "hidden", padding: "66px 70px 58px 104px", position: "relative", width: "100%" }}>
+    <div style={{ background: accent, bottom: 0, display: "flex", left: 0, position: "absolute", top: 0, width: 34 }} />
+    <div style={{ border: "2px solid #172033", display: "flex", inset: "28px 28px 28px 52px", opacity: .8, position: "absolute" }} />
+    <div style={{ border: "1px solid rgba(23,32,51,.22)", display: "flex", inset: "39px 39px 39px 63px", position: "absolute" }} />
+    <div style={{ background: `repeating-radial-gradient(circle at 84% 16%,transparent 0 21px,${accent}22 22px 23px)`, display: "flex", height: 610, position: "absolute", right: -90, top: -105, width: 610 }} />
+    <div style={{ color: accent, display: "flex", fontFamily: "Georgia, serif", fontSize: 260, fontWeight: 700, letterSpacing: -25, lineHeight: 1, opacity: .09, position: "absolute", right: 55, top: 150 }}>{theme.mark}</div>
+
+    <header style={{ alignItems: "flex-start", borderBottom: "1px solid rgba(23,32,51,.3)", display: "flex", justifyContent: "space-between", paddingBottom: 25, position: "relative" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 7 }}><strong style={{ fontSize: 30, letterSpacing: -2 }}>LovTokens Archive</strong><span style={{ fontSize: 11, letterSpacing: 4 }}>CURATED ACHIEVEMENT RECORD</span></div>
+      <div style={{ alignItems: "flex-end", display: "flex", flexDirection: "column", gap: 7 }}><strong style={{ color: accent, fontFamily: "monospace", fontSize: 19 }}>{theme.code}</strong><span style={{ fontFamily: "monospace", fontSize: 11 }}>{c.id.slice(0, 12).toUpperCase()}</span></div>
+    </header>
+
+    <div style={{ display: "flex", flexDirection: "column", marginTop: 92, position: "relative" }}>
+      <div style={{ alignItems: "center", display: "flex", gap: 12 }}><span style={{ background: accent, color: "#f1ecdf", display: "flex", fontSize: 12, fontWeight: 900, letterSpacing: 3, padding: "10px 13px" }}>{locale === "zh" ? "典藏档案版" : "ARCHIVE EDITION"}</span><span style={{ color: accent, fontSize: 14, fontWeight: 900, letterSpacing: 3 }}>{theme.name[locale].toUpperCase()}</span></div>
+      <h1 style={{ fontFamily: "Georgia, serif", fontSize: 58, fontWeight: 500, letterSpacing: -3.5, lineHeight: .98, margin: "31px 0 0", maxWidth: 790 }}>{title}</h1>
+      <span style={{ fontFamily: "Georgia, serif", fontSize: 23, fontStyle: "italic", marginTop: 16, opacity: .58 }}>{revoked ? (locale === "zh" ? "身份已撤回" : "Identity withdrawn") : c.displayName}</span>
+    </div>
+
+    <div style={{ display: "flex", flexDirection: "column", marginTop: 105, position: "relative" }}>
+      <span style={{ color: accent, fontSize: 14, fontWeight: 900, letterSpacing: 6 }}>{locale === "zh" ? "累计已处理" : "AGGREGATE PROCESSED"}</span>
+      <strong style={{ color: "#172033", display: "flex", fontSize: 164, fontWeight: 900, letterSpacing: -13, lineHeight: .82, marginTop: 18 }}>{formatTokenCount(c.processedTokens)}</strong>
+      <span style={{ fontSize: 14, fontWeight: 900, letterSpacing: 7, marginTop: 23 }}>INPUT + OUTPUT TOKENS</span>
+    </div>
+
+    <div style={{ alignItems: "center", display: "flex", marginTop: "auto", position: "relative" }}>
+      <div style={{ alignItems: "center", border: `3px solid ${accent}`, borderRadius: 999, color: accent, display: "flex", flexDirection: "column", height: 150, justifyContent: "center", padding: 8, transform: "rotate(-8deg)", width: 150 }}><div style={{ alignItems: "center", border: `1px solid ${accent}`, borderRadius: 999, display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", width: "100%" }}><strong style={{ fontFamily: "Georgia, serif", fontSize: 47 }}>{theme.mark}</strong><span style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2 }}>{locale === "zh" ? "典藏认证" : "ARCHIVED"}</span></div></div>
+      <div style={{ borderBottom: "1px solid rgba(23,32,51,.3)", borderTop: "1px solid rgba(23,32,51,.3)", display: "flex", marginLeft: 35, padding: "24px 0", width: 700 }}>
+        <ArchiveMetric label={locale === "zh" ? "全球排名" : "GLOBAL RANK"} value={c.rank ? `#${c.rank}` : "—"} />
+        <ArchiveMetric label={locale === "zh" ? "数据覆盖率" : "DATA COVERAGE"} value={`${c.coverage.toFixed(0)}%`} />
+        <ArchiveMetric label={locale === "zh" ? "获得日期" : "DATE EARNED"} value={issued} />
+      </div>
+    </div>
+
+    <footer style={{ alignItems: "flex-end", display: "flex", justifyContent: "space-between", marginTop: 33, position: "relative" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 13, maxWidth: 670 }}>
+        <div style={{ alignItems: "center", color: proof === "invalid" ? "#a83a32" : accent, display: "flex", fontSize: 15, fontWeight: 900, gap: 9 }}><span style={{ background: proof === "invalid" ? "#a83a32" : accent, borderRadius: 999, display: "flex", height: 9, width: 9 }} />{proofLabel}</div>
+        <span style={{ fontFamily: "monospace", fontSize: 11, opacity: .48 }}>SHA-256 / {c.payloadHash.slice(0, 36)}…</span>
+        <span style={{ fontSize: 11, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase" }}>{revoked ? (locale === "zh" ? "已撤销" : "Revoked") : c.trustLevel.replaceAll("-", " ")}</span>
+      </div>
+      <div style={{ alignItems: "center", display: "flex", flexDirection: "column", gap: 7 }}><div style={{ background: "white", border: `2px solid ${accent}`, display: "flex", padding: 7 }}><img alt="Achievement proof QR code" height={120} src={qr} width={120} /></div><span style={{ color: accent, fontSize: 10, fontWeight: 900, letterSpacing: 2 }}>{locale === "zh" ? "扫码查看证明" : "SCAN TO VERIFY"}</span></div>
+    </footer>
+    {revoked && <div style={{ border: "7px solid #a83a32", color: "#a83a32", display: "flex", fontSize: 60, fontWeight: 900, left: 320, padding: "14px 26px", position: "absolute", top: 590, transform: "rotate(-12deg)" }}>{locale === "zh" ? "已撤销" : "REVOKED"}</div>}
+  </div>;
+}
+
+function archiveAccentFor(code: string) {
+  if (code === "M—05") return "#9c681f";
+  if (code === "M—04") return "#684696";
+  if (code === "M—03") return "#285f8d";
+  if (code === "M—02") return "#356b4b";
+  if (code === "M—01") return "#875531";
+  return "#40598f";
+}
+
+function ArchiveMetric({ label, value }: { label: string; value: string }) {
+  return <div style={{ borderRight: "1px solid rgba(23,32,51,.22)", display: "flex", flexDirection: "column", gap: 8, padding: "0 20px", width: "33.333%" }}><span style={{ fontSize: 10, letterSpacing: 2, opacity: .55 }}>{label}</span><strong style={{ fontSize: 23 }}>{value}</strong></div>;
 }
 
 function CardMetric({ label, value }: { label: string; value: string }) {

@@ -9,7 +9,7 @@ describe("ShareThemeGallery", () => {
   it("shows four portrait themes linked to the matching generated image", () => {
     const { container } = render(<ShareThemeGallery handle="jie" locale="zh" />);
     expect(container.querySelectorAll(".share-theme-image")).toHaveLength(4);
-    expect(screen.getByText("Obsidian Lime").closest(".share-theme-option")?.querySelector("a")).toHaveAttribute("href", "/share/jie/profile.png?theme=obsidian");
+    expect(screen.getByText("Obsidian Lime").closest(".share-theme-option")?.querySelector("a")).toHaveAttribute("href", "/share/jie/profile.svg?theme=obsidian");
     expect(screen.getAllByText("1080 × 1350 · PNG")).toHaveLength(4);
   });
 

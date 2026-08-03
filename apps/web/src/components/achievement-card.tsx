@@ -1,5 +1,9 @@
+"use client";
+
 import { ArrowUpRight, Download } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
+import type { AchievementCardStyle } from "./certificate-image";
 import { formatTokenCount } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
 import { localePath } from "@/lib/i18n";
@@ -34,20 +38,26 @@ function achievementCopy(achievement: AchievementCardData, locale: Locale) {
 }
 
 export function AchievementCard({ achievement, locale }: { achievement: AchievementCardData; locale: Locale }) {
+  const [cardStyle, setCardStyle] = useState<AchievementCardStyle>("collector");
   const copy = achievementCopy(achievement, locale);
   const encodedId = encodeURIComponent(achievement.id);
   const proofHref = localePath(`/certificate/${encodedId}`, locale);
-  const imageUrl = `/certificate/${encodedId}/image?lang=${locale}`;
+  const imageUrl = `/certificate/${encodedId}/image?lang=${locale}&style=${cardStyle}`;
   const downloadUrl = `${imageUrl}&download=1`;
+  const styleName = cardStyle === "collector" ? (locale === "zh" ? "金属典藏" : "Metal Collector") : (locale === "zh" ? "档案典藏" : "Archive Edition");
 
   return <article className="achievement-gallery-item">
     <LocaleLink ariaLabel={`${copy.proof}：${copy.title}`} className="achievement-image-link" href={proofHref} locale={locale}>
-      <Image alt={copy.title} className="achievement-card-image" height={1350} src={imageUrl} unoptimized width={1080} />
+      <Image alt={`${copy.title} · ${styleName}`} className="achievement-card-image" height={1350} src={imageUrl} unoptimized width={1080} />
     </LocaleLink>
+    <div aria-label={locale === "zh" ? "成就卡片样式" : "Achievement card style"} className="achievement-style-switch" role="group">
+      <button aria-pressed={cardStyle === "collector"} onClick={() => setCardStyle("collector")} type="button">{locale === "zh" ? "金属典藏" : "Metal Collector"}</button>
+      <button aria-pressed={cardStyle === "archive"} onClick={() => setCardStyle("archive")} type="button">{locale === "zh" ? "档案典藏" : "Archive Edition"}</button>
+    </div>
     <footer className="achievement-gallery-meta">
-      <span><strong>{copy.title}</strong><small>{copy.type} · 1080 × 1350 PNG</small></span>
+      <span><strong>{copy.title}</strong><small>{styleName} · {copy.type} · 1080 × 1350 PNG</small></span>
       <span className="achievement-gallery-actions">
-        <a download={`lovtokens-achievement-${achievement.id}.png`} href={downloadUrl}>{copy.download}<Download aria-hidden="true" size={14} /></a>
+        <a download={`lovtokens-achievement-${achievement.id}-${cardStyle}.png`} href={downloadUrl}>{copy.download}<Download aria-hidden="true" size={14} /></a>
         <LocaleLink href={proofHref} locale={locale}>{copy.proof}<ArrowUpRight aria-hidden="true" size={14} /></LocaleLink>
       </span>
     </footer>

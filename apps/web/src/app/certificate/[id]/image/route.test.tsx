@@ -31,19 +31,30 @@ import { GET } from "./route";
 import { getCertificate } from "@/lib/repository";
 
 describe("achievement image route", () => {
-  it.each([1_000_000, 10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000])("renders the %d milestone theme as a downloadable portrait PNG", async (processedTokens) => {
+  it.each([1_000_000, 10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000])("renders the %d milestone theme as a downloadable portrait SVG", async (processedTokens) => {
     vi.mocked(getCertificate).mockResolvedValue({ ...certificate, period: String(processedTokens), processedTokens });
     const response = await GET(new Request("https://lovtokens.test/certificate/cert-100m/image?lang=zh&download=1"), {
       params: Promise.resolve({ id: "cert-100m" }),
     });
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("content-type")).toBe("image/png");
+    expect(response.headers.get("content-type")).toContain("image/svg+xml");
     expect(response.headers.get("content-disposition")).toContain("attachment");
-    const png = await response.arrayBuffer();
-    const header = new DataView(png);
-    expect(png.byteLength).toBeGreaterThan(1_000);
-    expect(header.getUint32(16)).toBe(1080);
-    expect(header.getUint32(20)).toBe(1350);
+    const svg = await response.text();
+    expect(svg.length).toBeGreaterThan(1_000);
+    expect(svg).toContain('width="1080" height="1350"');
+    expect(svg).toContain("LovTokens");
+  }, 30_000);
+
+  it("renders the archive edition without replacing the collector edition", async () => {
+    vi.mocked(getCertificate).mockResolvedValue({ ...certificate });
+    const response = await GET(new Request("https://lovtokens.test/certificate/cert-100m/image?lang=zh&style=archive"), {
+      params: Promise.resolve({ id: "cert-100m" }),
+    });
+
+    expect(response.status).toBe(200);
+    const svg = await response.text();
+    expect(svg).toContain('width="1080" height="1350"');
+    expect(svg).toContain("LovTokens Archive");
   }, 30_000);
 });

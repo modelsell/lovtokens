@@ -2,15 +2,18 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "main": "worker.ts",
   "name": "lovtokens",
+  "workers_dev": true,
+  "preview_urls": false,
   "compatibility_date": "2026-08-02",
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "routes": [{ "pattern": "lovtokens.com", "custom_domain": true }],
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "lovtokens" }],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "lovtokens-db",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "d040aa0d-44c9-47e6-a434-71cbcec6d7c1",
       "migrations_dir": "../../migrations"
     }
   ],
@@ -18,7 +21,10 @@
     { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "lovtokens-next-cache" },
     { "binding": "SHARE_ASSETS", "bucket_name": "lovtokens-share-assets" }
   ],
-  "vars": { "PUBLIC_SITE_URL": "https://example.com" },
+  "vars": {
+    "PUBLIC_SITE_URL": "https://lovtokens.com",
+    "EMAIL_PASSWORD_AUTH_ENABLED": "true"
+  },
   "observability": { "enabled": true },
   "triggers": { "crons": ["*/10 * * * *"] }
 }
