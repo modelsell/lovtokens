@@ -1,4 +1,5 @@
 import { AlertTriangle, ArrowRight, CheckCircle2, Clock3, EyeOff, Trophy } from "lucide-react";
+import { ActivityBreakdown } from "@/components/activity-breakdown";
 import { CommandCopy } from "@/components/command-copy";
 import { LocaleLink } from "@/components/locale-link";
 import { UsageHeatmap } from "@/components/usage-heatmap";
@@ -27,8 +28,8 @@ export default async function DashboardPage() {
       <SyncHealth locale={locale} details={details} isPublic={Boolean(viewer.profile?.isPublic)} />
       <section className="dashboard-grid">
         <article className="panel dashboard-trend"><UsageHeatmap daily={details?.daily || []} locale={locale} today={details?.today || "1970-01-01"} /></article>
-        <article className="panel"><div className="panel-head"><h2>{t(locale, "Agent breakdown")}</h2></div><Breakdown rows={(details?.sources || []).map((row) => ({ label: sourceLabel(row.source), tokens: Number(row.tokens) }))} /></article>
-        <article className="panel"><div className="panel-head"><h2>{t(locale, "Top models")}</h2></div><Breakdown rows={(details?.models || []).map((row) => ({ label: row.model, tokens: Number(row.tokens) }))} /></article>
+        <article className="panel"><div className="panel-head"><h2>{t(locale, "Agent breakdown")}</h2></div><ActivityBreakdown rows={(details?.sources || []).map((row) => ({ label: sourceLabel(row.source), tokens: Number(row.tokens) }))} /></article>
+        <article className="panel"><div className="panel-head"><h2>{t(locale, "Top models")}</h2></div><ActivityBreakdown rows={(details?.models || []).map((row) => ({ label: row.model, tokens: Number(row.tokens) }))} /></article>
         <article className="panel dashboard-actions"><div className="panel-head"><h2>{t(locale, "Quick actions")}</h2></div><LocaleLink href={link("/settings/privacy")} locale={locale}>{t(locale, "Privacy and leaderboard")}<ArrowRight size={15} /></LocaleLink><LocaleLink href={link("/settings/devices")} locale={locale}>{t(locale, "Device management")}<ArrowRight size={15} /></LocaleLink><LocaleLink href={link("/dashboard/share")} locale={locale}>{t(locale, "Share studio")}<ArrowRight size={15} /></LocaleLink>{viewer.profile?.isPublic && <LocaleLink href={link(`/u/${viewer.profile.handle}`)} locale={locale}>{t(locale, "View public profile")}<ArrowRight size={15} /></LocaleLink>}</article>
       </section>
     </>}
@@ -38,10 +39,4 @@ export default async function DashboardPage() {
 function SyncHealth({ locale, details, isPublic }: { locale: Locale; details: Awaited<ReturnType<typeof getDashboardDetails>>; isPublic: boolean }) {
   const stale = !details?.lastSyncedAt || (details.nowUnix - details.lastSyncedAt) > 86_400;
   return <div className="health-grid"><div data-warning={stale || undefined}>{stale ? <Clock3 size={18} /> : <CheckCircle2 size={18} />}<span><strong>{stale ? t(locale, "Sync needs attention") : t(locale, "Sync is healthy")}</strong><small>{t(locale, "Last sync")}: {formatRelativeTime(details?.lastSyncedAt || null, locale)}</small></span></div><div data-warning={Boolean(details?.quarantined) || undefined}>{details?.quarantined ? <AlertTriangle size={18} /> : <CheckCircle2 size={18} />}<span><strong>{details?.quarantined ? `${details.quarantined} ${t(locale, "quarantined buckets")}` : t(locale, "No quarantined data")}</strong><small>{details?.activeDevices || 0} / {details?.deviceTotal || 0} {t(locale, "active devices")}</small></span></div><div data-warning={!isPublic || undefined}>{isPublic ? <Trophy size={18} /> : <EyeOff size={18} />}<span><strong>{isPublic ? t(locale, "Leaderboard enabled") : t(locale, "Profile remains private")}</strong><small>{isPublic ? t(locale, "Your measured usage can be ranked.") : t(locale, "Publish only when you are ready.")}</small></span></div></div>;
-}
-
-function Breakdown({ rows }: { rows: { label: string; tokens: number }[] }) {
-  const max = Math.max(1, ...rows.map((row) => row.tokens));
-  if (!rows.length) return <p className="form-message">—</p>;
-  return <div className="dashboard-breakdown">{rows.map((row) => <div key={row.label}><span><strong>{row.label}</strong><small>{formatTokenCount(row.tokens)}</small></span><i><b style={{ width: `${(row.tokens / max) * 100}%` }} /></i></div>)}</div>;
 }

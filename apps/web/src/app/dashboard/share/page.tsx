@@ -1,7 +1,38 @@
 import { headers } from "next/headers";
-import { ShareCardPreview } from "@/components/share-card-preview";
+import { ShareThemeGallery } from "@/components/share-theme-gallery";
 import { getSession } from "@/lib/auth";
-import { getPrivateSummary } from "@/lib/private-repository";
+import { getDashboardDetails, getPrivateSummary } from "@/lib/private-repository";
+import { getLeaderboardPosition } from "@/lib/repository";
 import { t } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
-export default async function ShareStudio() { const locale = await getLocale(); const s = await getSession(await headers()); const d = s?.user ? await getPrivateSummary(s.user.id) : null; const handle = String(d?.profile.handle || "your-handle"); const download = locale === "zh" ? "下载" : "Download"; return <><h1>{t(locale, "Share studio.")}</h1><div className="panel"><ShareCardPreview displayName={String(d?.profile.display_name || s?.user.name || (locale === "zh" ? "你的名字" : "Your Name"))} handle={handle} tokens={d?.total || 0} activeDays={d?.activeDays || 0} locale={locale} /><div className="theme-list" style={{ marginTop: 20 }}><a href={`/share/${handle}/month.png?theme=obsidian`}>{download} 1200×630 · Obsidian</a><a href={`/share/${handle}/lifetime-square.png?theme=terminal`}>{download} 1080×1080 · Terminal</a><a href={`/share/${handle}/story.png?theme=aurora`}>{download} 1080×1920 · Aurora</a><a href={`/share/${handle}/certificate.png?theme=ivory`}>{download} 1600×900 · Ivory</a></div></div></>; }
+export default async function ShareStudio() {
+  const locale = await getLocale();
+  const session = await getSession(await headers());
+  const [details, activity, position] = session?.user ? await Promise.all([
+    getPrivateSummary(session.user.id),
+    getDashboardDetails(session.user.id),
+    getLeaderboardPosition(session.user.id, "all"),
+  ]) : [null, null, null];
+  const profile = details?.profile;
+  return <>
+    <h1>{t(locale, "Share studio.")}</h1>
+    <p>{locale === "zh" ? "选择一种竖版图片风格，预览并下载你的公开 Token 档案。" : "Choose a portrait image style to preview and download your public token portfolio."}</p>
+    <ShareThemeGallery
+      activeDays={details?.activeDays || 0}
+      claudeTokens={details?.claudeTokens || 0}
+      codexTokens={details?.codexTokens || 0}
+      displayName={String(profile?.display_name || session?.user.name || (locale === "zh" ? "你的名字" : "Your Name"))}
+      downloadEnabled={Boolean(profile?.is_public)}
+      handle={String(profile?.handle || "your-handle")}
+      history={Boolean(profile?.show_exact_tokens) ? (activity?.daily || []).map((row) => ({ date: row.date, tokens: Number(row.tokens) })) : []}
+      locale={locale}
+      models={Boolean(profile?.show_exact_tokens) && Boolean(profile?.show_models) ? (activity?.models || []).map((row) => ({ model: row.model, tokens: Number(row.tokens) })) : []}
+      percentile={position?.percentile || 100}
+      rank={position?.rank || 0}
+      showExactTokens={Boolean(profile?.show_exact_tokens)}
+      showRank={Boolean(profile?.show_rank)}
+      sources={Boolean(profile?.show_exact_tokens) ? (activity?.sources || []).map((row) => ({ source: row.source, tokens: Number(row.tokens) })) : []}
+      tokens={details?.total || 0}
+    />
+  </>;
+}

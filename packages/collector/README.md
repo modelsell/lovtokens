@@ -9,6 +9,13 @@ npm install --global lovtokens
 lovtokens show-data
 ```
 
+For agent-led onboarding, copy the short handoff from the LovTokens homepage
+into Codex or Claude Code. It points to the production `/agent-register.md`
+document, where the agent reads the complete workflow before running
+`lovtokens agent-register`. The agent confirms email, nickname, privacy, and
+scheduled-sync consent, then returns the account summary and locally generated
+one-time initial password.
+
 Run `lovtokens show-data` to inspect the exact upload payload. Auto sync is opt-in
 and can be removed with `lovtokens auto-sync remove`.
 

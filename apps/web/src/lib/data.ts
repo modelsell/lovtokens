@@ -27,11 +27,15 @@ export type PublicProfile = LeaderboardEntry & {
   showRank: boolean;
   showModels: boolean;
   showCost: boolean;
+  today: string;
   history: Array<{ date: string; tokens: number }>;
+  sources: Array<{ source: string; tokens: number }>;
+  models: Array<{ model: string; tokens: number }>;
 };
 
 export type CertificateRecord = {
   id: string;
+  userId: string | null;
   handle: string;
   displayName: string;
   kind: string;

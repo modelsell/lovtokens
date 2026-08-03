@@ -1,15 +1,18 @@
 import { access } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
+import { createInterface } from "node:readline/promises";
 import { Command } from "commander";
 import { formatTokenCount, processedTokens, syncPayloadV1Schema } from "@lovtokens/token-schema";
-import { readConfig, removeConfig, writeConfig } from "./config.js";
+import { readConfig, removeConfig, resolveServerUrl, writeConfig } from "./config.js";
 import { installAutoSync, openExternal, removeAutoSync } from "./platform.js";
 import { scanAll } from "./scanner.js";
 
 const program = new Command();
-program.name("lovtokens").description("Your private AI token collector").version("0.1.0");
+program.name("lovtokens").description("Your private AI token collector").version("0.1.1");
 
-program.command("connect").description("Connect this device and run the first sync").action(async () => {
+program.command("connect").description("Connect this device and run the first sync").option("--server <url>", "LovTokens site URL").action(async ({ server }: { server?: string }) => {
   const config = await readConfig();
+  config.serverUrl = registrationServer(resolveServerUrl(server || config.serverUrl, process.env.LOVTOKENS_URL));
   const response = await fetch(`${config.serverUrl}/api/device/start`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -37,6 +40,65 @@ program.command("connect").description("Connect this device and run the first sy
   }
   throw new Error("Connection expired. Run lovtokens connect again.");
 });
+
+program.command("agent-register")
+  .description("Conversational account registration for Codex and Claude Code")
+  .option("--server <url>", "LovTokens site URL shown in the copied registration guide")
+  .action(async ({ server }: { server?: string }) => {
+    const current = await readConfig();
+    if (current.deviceId) throw new Error(`This device is already connected as @${current.handle || "unknown"}. Run lovtokens status instead.`);
+    const serverUrl = registrationServer(resolveServerUrl(server || current.serverUrl, process.env.LOVTOKENS_URL));
+    const answers = await promptAgentRegistration();
+    const password = `${randomBytes(18).toString("base64url")}Aa1!`;
+    const deviceName = `${process.platform} · ${process.env.USER || process.env.USERNAME || "agent-device"}`;
+
+    const response = await fetch(`${serverUrl}/api/agent/register/v1`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "user-agent": `lovtokens/${program.version()} agent-register` },
+      body: JSON.stringify({ ...answers, password, deviceName }),
+    });
+    const result = await response.json().catch(() => null) as AgentRegistrationResponse | { error?: string } | null;
+    if (!response.ok || !result || !("ok" in result)) {
+      throw new Error(result && "error" in result && result.error ? result.error : `Registration failed (${response.status})`);
+    }
+
+    console.log("Account and device created.");
+    console.log(`Email: ${result.email}`);
+    console.log(`Nickname: ${result.nickname}`);
+    console.log(`Handle: @${result.handle}`);
+    console.log(`Privacy: ${result.visibility}`);
+    console.log(`Initial password (shown once): ${password}`);
+    console.log(`Login: ${result.loginUrl}`);
+    if (result.profileUrl) console.log(`Public profile: ${result.profileUrl}`);
+    if (result.verificationRequired) console.log("Email verification: required · check your inbox before web sign-in.");
+
+    try {
+      await writeConfig({ serverUrl, deviceId: result.deviceId, deviceToken: result.deviceToken, handle: result.handle });
+    } catch (error) {
+      throw new Error(`Account was created, but local credentials could not be stored. Sign in at ${result.loginUrl} with the initial password above and revoke the incomplete device. ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    try {
+      console.log("Running the first privacy-safe sync…");
+      await sync(false);
+    } catch (error) {
+      throw new Error(`Account was created, but the first sync failed. Run lovtokens sync to retry. ${error instanceof Error ? error.message : String(error)}`);
+    }
+
+    if (answers.autoSync) {
+      const executable = process.argv[1];
+      if (!executable || !(await exists(executable))) throw new Error("Account and first sync completed, but the scheduled task could not resolve the lovtokens executable. Run lovtokens auto-sync install to retry.");
+      try {
+        console.log(`Scheduled sync: installed at ${await installAutoSync(executable)}`);
+      } catch (error) {
+        throw new Error(`Account and first sync completed, but scheduled sync installation failed. Run lovtokens auto-sync install to retry. ${error instanceof Error ? error.message : String(error)}`);
+      }
+    } else {
+      console.log("Scheduled sync: not installed by user choice.");
+    }
+
+    console.log("Registration complete.");
+  });
 
 program.command("sync").option("--dry-run", "print the payload without uploading").action(async ({ dryRun }) => sync(Boolean(dryRun)));
 
@@ -110,7 +172,7 @@ async function sync(dryRun: boolean) {
 }
 
 function makePayload(deviceId: string, buckets: Awaited<ReturnType<typeof scanAll>>["buckets"]) {
-  return syncPayloadV1Schema.parse({ schemaVersion: 1, collectorVersion: "0.1.0", deviceId, generatedAt: new Date().toISOString(), buckets });
+  return syncPayloadV1Schema.parse({ schemaVersion: 1, collectorVersion: "0.1.1", deviceId, generatedAt: new Date().toISOString(), buckets });
 }
 
 function printCoverage(sources: Awaited<ReturnType<typeof scanAll>>["sources"]) {
@@ -122,6 +184,55 @@ function printCoverage(sources: Awaited<ReturnType<typeof scanAll>>["sources"]) 
 
 async function exists(path: string) {
   try { await access(path); return true; } catch { return false; }
+}
+
+type AgentRegistrationResponse = {
+  ok: true;
+  email: string;
+  nickname: string;
+  handle: string;
+  visibility: "private" | "summary" | "public";
+  deviceId: string;
+  deviceToken: string;
+  verificationRequired: boolean;
+  loginUrl: string;
+  privacySettingsUrl: string;
+  profileUrl: string | null;
+};
+
+async function promptAgentRegistration() {
+  const prompt = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const email = await askUntil(prompt, "Email: ", (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254, "Enter a valid email address.");
+    const nickname = await askUntil(prompt, "Nickname: ", (value) => value.length >= 1 && value.length <= 60, "Nickname must contain 1–60 characters.");
+    const visibilityAnswer = await askUntil(prompt, "Privacy [1 private (recommended) / 2 summary / 3 public]: ", (value) => ["", "1", "2", "3", "private", "summary", "public"].includes(value.toLowerCase()), "Choose 1, 2, or 3.");
+    const visibility = ({ "2": "summary", "3": "public", summary: "summary", public: "public" } as const)[visibilityAnswer.toLowerCase() as "2" | "3" | "summary" | "public"] || "private";
+    const autoSyncAnswer = await askUntil(prompt, "Install a local 30-minute scheduled sync? [y/N]: ", (value) => ["", "y", "yes", "n", "no"].includes(value.toLowerCase()), "Answer yes or no.");
+    const autoSync = ["y", "yes"].includes(autoSyncAnswer.toLowerCase());
+    console.log(`\nConfirm: ${email} · ${nickname} · ${visibility} · scheduled sync ${autoSync ? "on" : "off"}`);
+    const confirmed = await askUntil(prompt, "Create the account and run the first sync? [y/N]: ", (value) => ["", "y", "yes", "n", "no"].includes(value.toLowerCase()), "Answer yes or no.");
+    if (!["y", "yes"].includes(confirmed.toLowerCase())) throw new Error("Registration cancelled before any account was created.");
+    return { email: email.toLowerCase(), nickname, visibility, autoSync };
+  } finally {
+    prompt.close();
+  }
+}
+
+async function askUntil(prompt: ReturnType<typeof createInterface>, question: string, valid: (value: string) => boolean, error: string) {
+  while (true) {
+    const value = (await prompt.question(question)).trim();
+    if (valid(value)) return value;
+    console.error(error);
+  }
+}
+
+function registrationServer(value: string) {
+  let url: URL;
+  try { url = new URL(value); } catch { throw new Error("The registration guide contains an invalid LovTokens server URL."); }
+  const local = ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+  if (url.protocol !== "https:" && !(local && url.protocol === "http:")) throw new Error("Agent registration requires HTTPS, except on localhost.");
+  if (url.username || url.password) throw new Error("The LovTokens server URL must not contain credentials.");
+  return url.toString().replace(/\/$/, "");
 }
 
 program.parseAsync().catch((error: unknown) => {

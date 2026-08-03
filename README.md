@@ -49,6 +49,15 @@ node packages/collector/dist/index.js show-data
 node packages/collector/dist/index.js sync --dry-run
 ```
 
+The complete Agent workflow is stored at `apps/web/public/agent-register.md` and
+is published as `/agent-register.md`. The homepage copies only a short handoff
+that tells Codex or Claude Code to read that production URL. The agent-facing
+`agent-register` command creates the email account,
+applies an explicit private/summary/public policy, binds the current device, runs
+the first sync, and optionally installs the existing 30-minute background task.
+The initial password is generated locally and shown once; the device token is
+stored through the existing operating-system credential path.
+
 ## Verification
 
 ```bash

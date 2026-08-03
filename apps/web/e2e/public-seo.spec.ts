@@ -1,29 +1,45 @@
 import { expect, test } from "@playwright/test";
 
-const testOrigin = "http://localhost:3107";
+const testOrigin = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3107";
 
-test("home renders the privacy boundary and primary command in initial HTML", async ({ request, page }) => {
+test("home explains the product and switches between agent and one-command setup", async ({ request, page }) => {
   const response = await request.get("/"); const html = await response.text();
   expect(response.ok()).toBeTruthy();
   expect(html).toContain("Your AI Token Portfolio");
-  expect(html).toContain("npx lovtokens@latest connect");
+  expect(html).toContain(`${testOrigin}/agent-register.md`);
+  expect(html).toContain(`For my current operating system, read and follow ${testOrigin}/agent-register.md`);
   expect(html).toContain("application/ld+json");
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: /Count it/i })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: "See your AI coding usage." }),
+  ).toBeVisible();
+  await expect(page.getByRole("tab", { name: /Set up with Agent/ })).toHaveAttribute("aria-selected", "true");
+  await expect(page.getByRole("button", { name: "Copy recommendation" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /See the full instructions/ })).toHaveAttribute("href", `${testOrigin}/agent-register.md`);
+  await page.getByRole("tab", { name: "Manual setup" }).click();
+  await expect(page.getByText("Run one command")).toBeVisible();
+  await expect(page.getByText(`npx lovtokens@latest agent-register --server ${testOrigin}`, { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Copy setup command" })).toBeVisible();
+  await page.getByRole("tab", { name: /Set up with Agent/ }).click();
+  await expect(page.getByRole("button", { name: "Copy recommendation" })).toBeVisible();
 });
 
 test("crawler routes and methodology are indexable", async ({ request }) => {
-  for (const path of ["/robots.txt", "/sitemap.xml", "/llms.txt", "/methodology"]) {
+  for (const path of ["/robots.txt", "/sitemap.xml", "/llms.txt", "/methodology", "/agent-register.md"]) {
     const response = await request.get(path); expect(response.status(), path).toBe(200);
   }
   const methodology = await (await request.get("/methodology")).text();
   expect(methodology).toContain("processed tokens");
   expect(methodology).toContain("Usage is not productivity");
+  const registrationDocument = await (await request.get("/agent-register.md")).text();
+  expect(registrationDocument).toContain("npx lovtokens@latest agent-register --server {LOVTOKENS_ORIGIN}");
+  expect(registrationDocument).toContain("Registration complete.");
+  expect(registrationDocument).toContain("默认必须选择私密模式");
 });
 
 test("Chinese routes render complete localized pages and preserve the locale in navigation", async ({ request, page }) => {
   const expectations = [
-    ["/zh", "统计。"],
+    ["/zh", "看清你的"],
     ["/zh/leaderboard", "公开 Token 排行榜"],
     ["/zh/docs", "一条命令，边界清晰"],
     ["/zh/privacy", "只汇总数字，不采集工作内容"],
@@ -53,6 +69,31 @@ test("Chinese routes render complete localized pages and preserve the locale in 
   await page.getByRole("link", { name: "统计方法", exact: true }).first().click();
   await expect(page).toHaveURL(/\/zh\/methodology$/);
   await expect(page.getByRole("heading", { name: "每个数字都有规则。" })).toBeVisible();
+});
+
+test("agent registration creates a private account and bound device without exposing the token in a web session", async ({ request }) => {
+  const stamp = Date.now();
+  const email = `agent-register-${stamp}@example.test`;
+  const password = "LovTokens-agent-register-2026!";
+  const response = await request.post("/api/agent/register/v1", {
+    data: { email, nickname: `Agent ${stamp}`, password, visibility: "private", deviceName: "playwright · agent" },
+  });
+  expect(response.status()).toBe(201);
+  const registration = await response.json() as { handle: string; visibility: string; deviceId: string; deviceToken: string; profileUrl: string | null };
+  expect(registration.visibility).toBe("private");
+  expect(registration.profileUrl).toBeNull();
+  expect(registration.deviceId).toMatch(/^[0-9a-f-]{36}$/);
+  expect(registration.deviceToken).toMatch(/^[0-9a-f]{64}$/);
+
+  const duplicate = await request.post("/api/agent/register/v1", {
+    data: { email, nickname: "Different Agent", password: "Different-password-2026!", visibility: "public", deviceName: "untrusted duplicate" },
+  });
+  expect(duplicate.status()).toBe(409);
+
+  const login = await request.post("/api/auth/sign-in/email", { headers: { origin: testOrigin }, data: { email, password } });
+  expect(login.status()).toBe(200);
+  const cleanup = await request.delete("/api/settings/data", { headers: { origin: testOrigin } });
+  expect(cleanup.status()).toBe(200);
 });
 
 test("local device approval offers bilingual email registration without GitHub OAuth", async ({ page }) => {

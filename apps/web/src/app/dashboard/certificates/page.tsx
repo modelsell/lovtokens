@@ -1,8 +1,38 @@
 import { headers } from "next/headers";
-import { LocaleLink } from "@/components/locale-link";
+import { Award } from "lucide-react";
+import { AchievementCard, type AchievementCardData } from "@/components/achievement-card";
 import { getSession } from "@/lib/auth";
 import { getCertificatesForUser } from "@/lib/private-repository";
-import { formatTokenCount } from "@/lib/format";
-import { localePath, t } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
-export default async function CertificatesDashboard() { const locale = await getLocale(); const s = await getSession(await headers()); const rows: Array<Record<string, unknown>> = s?.user ? await getCertificatesForUser(s.user.id) : []; return <><h1>{t(locale, "Certificates.")}</h1><div className="settings-grid">{rows.length ? rows.map((c: Record<string, unknown>) => <LocaleLink className="setting-row" href={localePath(`/certificate/${c.id}`, locale)} key={String(c.id)} locale={locale}><span><strong>{String(c.kind)} · {String(c.period)}</strong><small>{String(c.status)}</small></span><strong>{formatTokenCount(Number(c.processed_tokens))}</strong></LocaleLink>) : <div className="setup-panel"><h2>{t(locale, "No frozen certificates yet")}</h2><p>{t(locale, "Complete calendar months and milestone thresholds are issued once, then kept immutable.")}</p></div>}</div></>; }
+
+export default async function CertificatesDashboard() {
+  const locale = await getLocale();
+  const session = await getSession(await headers());
+  const rows: Array<Record<string, unknown>> = session?.user ? await getCertificatesForUser(session.user.id) : [];
+  const achievements: AchievementCardData[] = rows.map((row) => ({
+    id: String(row.id),
+    kind: String(row.kind),
+    period: String(row.period),
+    processedTokens: Number(row.processed_tokens),
+    rank: row.rank === null || row.rank === undefined ? null : Number(row.rank),
+    coverage: Number(row.coverage ?? 0),
+    trustLevel: String(row.trust_level ?? "verified"),
+    status: String(row.status),
+    issuedAt: Number(row.issued_at),
+  }));
+
+  return <>
+    <div className="achievement-page-title">
+      <h1>{t(locale, "Achievements.")}</h1>
+      <p>{t(locale, "Every completed month and token milestone becomes a collectible achievement.")}</p>
+    </div>
+    {achievements.length ? <div className="achievement-gallery">
+      {achievements.map((achievement) => <AchievementCard achievement={achievement} key={achievement.id} locale={locale} />)}
+    </div> : <div className="setup-panel achievement-empty">
+      <Award aria-hidden="true" size={30} strokeWidth={1.5} />
+      <h2>{t(locale, "Your achievements will appear here")}</h2>
+      <p>{t(locale, "Complete a calendar month or reach a token milestone to unlock your first achievement.")}</p>
+    </div>}
+  </>;
+}

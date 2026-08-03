@@ -92,14 +92,21 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
       SUM(CASE WHEN ud.source='codex' THEN ud.input_tokens_total+ud.output_tokens_total ELSE 0 END) AS codex_tokens,
       SUM(CASE WHEN ud.source='claude-code' THEN ud.input_tokens_total+ud.output_tokens_total ELSE 0 END) AS claude_tokens,
       AVG(CASE WHEN ud.coverage='complete' THEN 100.0 ELSE 75.0 END) AS coverage,
-      MIN(ud.trust_level) AS trust_level
+      MIN(ud.trust_level) AS trust_level, date('now') AS today
     FROM profiles p JOIN usage_daily ud ON ud.user_id=p.user_id AND ud.quarantined=0 AND ud.trust_level!='imported'
     WHERE p.handle=?1 AND p.is_public=1 GROUP BY p.user_id`).bind(handle).first<Record<string, unknown>>();
   if (!profile) return null;
-  const historyResult = await db.prepare(`SELECT utc_date AS date, SUM(input_tokens_total+output_tokens_total) AS tokens FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.quarantined=0 AND ud.trust_level!='imported' GROUP BY utc_date ORDER BY utc_date DESC LIMIT 90`).bind(handle).all<{ date: string; tokens: number }>();
-  const model = await db.prepare(`SELECT model, SUM(input_tokens_total+output_tokens_total) total FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.quarantined=0 AND ud.trust_level!='imported' GROUP BY model ORDER BY total DESC LIMIT 1`).bind(handle).first<{ model: string }>();
-  const board = await getLeaderboard("all", "all", 10_000);
+  const [historyResult, sourceResult, modelResult, board] = await Promise.all([
+    db.prepare(`SELECT utc_date AS date, SUM(input_tokens_total+output_tokens_total) AS tokens FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.quarantined=0 AND ud.trust_level!='imported' GROUP BY utc_date ORDER BY utc_date DESC LIMIT 366`).bind(handle).all<{ date: string; tokens: number }>(),
+    db.prepare(`SELECT source, SUM(input_tokens_total+output_tokens_total) AS tokens FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.quarantined=0 AND ud.trust_level!='imported' GROUP BY source ORDER BY tokens DESC, source ASC`).bind(handle).all<{ source: string; tokens: number }>(),
+    db.prepare(`SELECT model, SUM(input_tokens_total+output_tokens_total) AS tokens FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.quarantined=0 AND ud.trust_level!='imported' GROUP BY model ORDER BY tokens DESC, model ASC LIMIT 5`).bind(handle).all<{ model: string; tokens: number }>(),
+    getLeaderboard("all", "all", 10_000),
+  ]);
   const found = board.find((entry) => entry.handle === handle);
+  const showExactTokens = Boolean(profile.show_exact_tokens);
+  const showModels = Boolean(profile.show_models);
+  const sources = sourceResult.results.map((row) => ({ source: row.source, tokens: Number(row.tokens) }));
+  const models = modelResult.results.map((row) => ({ model: row.model, tokens: Number(row.tokens) }));
   return {
     rank: found?.rank ?? 0,
     handle: String(profile.handle),
@@ -112,21 +119,24 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
     codexTokens: Number(profile.codex_tokens),
     claudeTokens: Number(profile.claude_tokens),
     trustLevel: String(profile.trust_level),
-    showExactTokens: Boolean(profile.show_exact_tokens),
+    showExactTokens,
     showAvatar: Boolean(profile.show_avatar),
     inputTokens: Number(profile.input_tokens),
     cacheTokens: Number(profile.cache_tokens),
     outputTokens: Number(profile.output_tokens),
     requestCount: Number(profile.request_count),
-    topModel: model?.model ?? null,
+    topModel: showModels ? models[0]?.model ?? null : null,
     currentStreak: calculateStreak(historyResult.results.map((row) => row.date)),
     coverage: Number(profile.coverage),
     statsVersion: Number(profile.stats_version),
     privacyVersion: Number(profile.privacy_version),
     showRank: Boolean(profile.show_rank),
-    showModels: Boolean(profile.show_models),
+    showModels,
     showCost: Boolean(profile.show_cost),
-    history: historyResult.results.reverse().map((row) => ({ date: row.date, tokens: Number(row.tokens) })),
+    today: String(profile.today),
+    history: showExactTokens ? historyResult.results.reverse().map((row) => ({ date: row.date, tokens: Number(row.tokens) })) : [],
+    sources: showExactTokens ? sources : [],
+    models: showExactTokens && showModels ? models : [],
   };
 }
 
@@ -136,7 +146,7 @@ export async function getCertificate(id: string): Promise<CertificateRecord | nu
   const row = await db.prepare(`SELECT c.*, p.handle, p.display_name, p.is_public, p.show_exact_tokens FROM certificates c LEFT JOIN profiles p ON p.user_id=c.user_id WHERE c.id=?1`).bind(id).first<Record<string, unknown>>();
   if (!row) return null;
   return {
-    id: String(row.id), handle: row.handle ? String(row.handle) : "revoked", displayName: row.status === "active" && row.display_name ? String(row.display_name) : "Identity withdrawn", kind: String(row.kind), period: String(row.period),
+    id: String(row.id), userId: row.user_id ? String(row.user_id) : null, handle: row.handle ? String(row.handle) : "revoked", displayName: row.status === "active" && row.display_name ? String(row.display_name) : "Identity withdrawn", kind: String(row.kind), period: String(row.period),
     processedTokens: Number(row.processed_tokens), rank: row.rank == null ? null : Number(row.rank), percentile: row.percentile == null ? null : Number(row.percentile),
     coverage: Number(row.coverage), trustLevel: String(row.trust_level), payloadHash: String(row.payload_hash), payloadJson: String(row.payload_json), signature: row.signature ? String(row.signature) : null,
     status: String(row.status), issuedAt: Number(row.issued_at), indexable: Boolean(row.is_public) && Boolean(row.show_exact_tokens),
