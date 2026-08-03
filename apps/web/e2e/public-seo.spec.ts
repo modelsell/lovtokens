@@ -34,7 +34,8 @@ test("crawler routes and methodology are indexable", async ({ request }) => {
   const registrationDocument = await (await request.get("/agent-register.md")).text();
   expect(registrationDocument).toContain("npx lovtokens@latest agent-register --server {LOVTOKENS_ORIGIN}");
   expect(registrationDocument).toContain("Registration complete.");
-  expect(registrationDocument).toContain("默认必须选择私密模式");
+  expect(registrationDocument).toContain("注册默认使用 `public` 模式");
+  expect(registrationDocument).toContain("只有得到用户明确确认后才能继续");
 });
 
 test("Chinese routes render complete localized pages and preserve the locale in navigation", async ({ request, page }) => {
