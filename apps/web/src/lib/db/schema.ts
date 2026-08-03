@@ -112,6 +112,7 @@ export const leaderboardSnapshots = sqliteTable("leaderboard_snapshots", {
   processedTokens: integer("processed_tokens").notNull(),
   codexTokens: integer("codex_tokens").notNull().default(0),
   claudeTokens: integer("claude_tokens").notNull().default(0),
+  workbuddyTokens: integer("workbuddy_tokens").notNull().default(0),
   activeDays: integer("active_days").notNull(),
   percentile: real("percentile").notNull(),
   generatedAt: integer("generated_at", { mode: "timestamp" }).notNull(),

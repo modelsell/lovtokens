@@ -9,6 +9,7 @@ export type LeaderboardEntry = {
   percentile: number;
   codexTokens: number;
   claudeTokens: number;
+  workbuddyTokens: number;
   trustLevel: string;
   showExactTokens: boolean;
   showAvatar: boolean;

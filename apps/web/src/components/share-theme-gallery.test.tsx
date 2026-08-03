@@ -34,7 +34,7 @@ describe("ShareThemeGallery", () => {
       history={[{ date: "2026-08-03", tokens: 1200 }]}
       locale="zh"
       models={[{ model: "gpt-5", tokens: 700 }]}
-      sources={[{ source: "codex", tokens: 700 }, { source: "claude-code", tokens: 300 }]}
+      sources={[{ source: "codex", tokens: 600 }, { source: "claude-code", tokens: 300 }, { source: "workbuddy", tokens: 100 }]}
       tokens={1000}
     />);
     expect(container.querySelectorAll(".share-card")).toHaveLength(4);

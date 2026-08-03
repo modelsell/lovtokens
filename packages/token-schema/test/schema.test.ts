@@ -65,6 +65,10 @@ describe("usageBucketV1Schema", () => {
     expect(processedTokens(parsed)).toBe(120);
   });
 
+  it("accepts WorkBuddy as a first-class source", () => {
+    expect(usageBucketV1Schema.parse({ ...bucket, source: "workbuddy" }).source).toBe("workbuddy");
+  });
+
   it("rejects token math that double counts cache", () => {
     expect(() => usageBucketV1Schema.parse({ ...bucket, inputTokensTotal: 150 })).toThrow();
   });

@@ -1,4 +1,4 @@
 import { siteUrl } from "@/lib/runtime";
-const publicPaths = ["", "/leaderboard", "/leaderboard/codex", "/leaderboard/claude-code", "/methodology", "/privacy", "/docs", "/compare/codex-vs-claude-code-token-usage", "/blog"];
+const publicPaths = ["", "/leaderboard", "/leaderboard/codex", "/leaderboard/claude-code", "/leaderboard/workbuddy", "/methodology", "/privacy", "/docs", "/compare/codex-vs-claude-code-token-usage", "/blog"];
 const paths = ["/agent-register.md", ...publicPaths, ...publicPaths.map((path) => `/zh${path}`)];
 export function GET() { const root = siteUrl(); const lastmod = new Date().toISOString(); const body = paths.map((path) => `<url><loc>${root}${path}</loc><lastmod>${lastmod}</lastmod><changefreq>${path.includes("leaderboard") ? "hourly" : "weekly"}</changefreq></url>`).join(""); return new Response(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${body}</urlset>`, { headers: { "content-type": "application/xml", "cache-control": "public,max-age=600" } }); }

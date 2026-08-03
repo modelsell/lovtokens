@@ -6,8 +6,9 @@ import { chromium } from "@playwright/test";
 vi.mock("@/lib/repository", () => ({
   getShareProfile: vi.fn(async () => ({
     activeDays: 48,
-    claudeTokens: 320_000_000,
-    codexTokens: 680_000_000,
+    claudeTokens: 300_000_000,
+    codexTokens: 600_000_000,
+    workbuddyTokens: 100_000_000,
     displayName: "Portrait Builder",
     handle: "portrait-builder",
     history: [
@@ -28,8 +29,9 @@ vi.mock("@/lib/repository", () => ({
     showModels: true,
     showRank: true,
     sources: [
-      { source: "codex", tokens: 680_000_000 },
-      { source: "claude-code", tokens: 320_000_000 },
+      { source: "codex", tokens: 600_000_000 },
+      { source: "claude-code", tokens: 300_000_000 },
+      { source: "workbuddy", tokens: 100_000_000 },
     ],
     statsVersion: 8,
     today: "2026-08-03",
@@ -56,6 +58,7 @@ describe("portrait share image", () => {
     expect(svg).toContain('width="1080" height="1350"');
     expect(svg).toContain("ALL-TIME TOKEN PORTFOLIO");
     expect(svg).toContain('data-share-layout="portrait-v3"');
+    expect(svg).toContain("WorkBuddy");
     expect(svg).toContain('<svg x="793" y="1077"');
   }, 20_000);
 

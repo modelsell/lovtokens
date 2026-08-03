@@ -3,7 +3,7 @@ import { z } from "zod";
 export const TOKEN_SCHEMA_VERSION = 1 as const;
 export const ACCOUNTING_VERSION = "2026-08-v1";
 
-export const tokenSourceSchema = z.enum(["codex", "claude-code"]);
+export const tokenSourceSchema = z.enum(["codex", "claude-code", "workbuddy"]);
 export const coverageSchema = z.enum(["complete", "partial"]);
 export const trustLevelSchema = z.enum([
   "provider-verified",

@@ -247,9 +247,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .builder-cell small { align-items: center; color: var(--muted); display: flex; font-size: 10px; gap: 4px; }
 .builder-cell small svg { color: var(--blue); }
 .agent-mix { display: flex; flex-wrap: wrap; }
-.agent-mix i, .agent-mix b { height: 4px; }
+.agent-mix i, .agent-mix b, .agent-mix em { height: 4px; }
 .agent-mix i { background: var(--ink); }
 .agent-mix b { background: var(--blue); }
+.agent-mix em { background: #f19b69; }
 .agent-mix small { color: var(--muted); font-size: 9px; margin-top: 7px; width: 100%; }
 .active-days, .token-cell { display: grid; }
 .active-days small, .token-cell small { color: var(--muted); font-size: 9px; }

@@ -7,7 +7,7 @@ export function formatPercent(value: number, locale: Locale = "en") {
 }
 
 export function sourceLabel(source: string) {
-  return source === "claude-code" ? "Claude Code" : source === "codex" ? "Codex" : "All agents";
+  return source === "claude-code" ? "Claude Code" : source === "codex" ? "Codex" : source === "workbuddy" ? "WorkBuddy" : "All agents";
 }
 
 export function formatRelativeTime(unixSeconds: number | null, locale: Locale = "en") {

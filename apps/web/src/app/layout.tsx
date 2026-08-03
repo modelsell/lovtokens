@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(siteUrl()),
     title: { default: title, template: `%s · ${name}` },
-    description: t(locale, "Privately count Codex and Claude Code tokens, join transparent usage leaderboards, and create shareable AI token certificates."),
+    description: t(locale, "Privately count Codex, Claude Code, and WorkBuddy tokens, join transparent usage leaderboards, and create shareable AI token certificates."),
     applicationName: name,
     alternates: languageAlternates("/", locale),
     openGraph: { title, description: t(locale, "Count it. Rank it. Share it."), type: "website", siteName: name, locale: locale === "zh" ? "zh_CN" : "en_US" },

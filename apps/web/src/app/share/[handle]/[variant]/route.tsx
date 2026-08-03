@@ -1,6 +1,6 @@
 import QRCode from "qrcode";
 import { renderToStaticMarkup } from "react-dom/server.browser";
-import { achievementFor, formatTokenCount } from "@/lib/format";
+import { achievementFor, formatTokenCount, sourceLabel } from "@/lib/format";
 import { getShareProfile } from "@/lib/repository";
 import { getShareBucket, siteUrl } from "@/lib/runtime";
 import { svgImageDocument } from "@/lib/svg-image";
@@ -19,7 +19,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ hand
   const { handle, variant } = await params; const size = sizes[variant as keyof typeof sizes]; if (!size) return new Response("Unknown image format", { status: 404 });
   const url = new URL(request.url); const theme = (url.searchParams.get("theme") || "obsidian") as keyof typeof themes; if (!themes[theme]) return new Response("Unknown theme", { status: 400 });
   const period = variant === "month.svg" ? "month" : "all"; const p = await getShareProfile(handle, period); if (!p) return new Response("Profile is private or missing", { status: 404 });
-  const cacheKey = `v10/${p.handle}/${p.statsVersion}-${p.privacyVersion}/${period}/${variant}/${theme}.svg`; const bucket = await getShareBucket(); const cached = await bucket?.get(cacheKey); if (cached) return new Response(cached.body, { headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public,max-age=31536000,immutable", etag: cached.httpEtag } });
+  const cacheKey = `v11/${p.handle}/${p.statsVersion}-${p.privacyVersion}/${period}/${variant}/${theme}.svg`; const bucket = await getShareBucket(); const cached = await bucket?.get(cacheKey); if (cached) return new Response(cached.body, { headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public,max-age=31536000,immutable", etag: cached.httpEtag } });
   const { background, accent, foreground, pattern } = themes[theme]; const profileUrl = `${siteUrl()}/u/${p.handle}`;
   let image: string;
   if (variant === "profile.svg") image = await portraitSvgImage(p, theme, profileUrl);
@@ -36,7 +36,7 @@ async function portraitSvgImage(p: ShareProfile, theme: keyof typeof themes, pro
   const { accent, foreground } = themes[theme];
   const exact = p.showExactTokens ? formatTokenCount(p.processedTokens) : "PRIVATE";
   const activity = buildShareActivity(p.history, p.today);
-  const sourceRows = p.sources.slice(0, 2).map((row) => ({ label: row.source === "claude-code" ? "Claude Code" : "Codex", tokens: row.tokens }));
+  const sourceRows = p.sources.slice(0, 3).map((row) => ({ label: sourceLabel(row.source), tokens: row.tokens }));
   const modelRows = p.models.slice(0, 3).map((row) => ({ label: row.model, tokens: row.tokens }));
   const qr = (await QRCode.toString(profileUrl, { type: "svg", errorCorrectionLevel: "M", margin: 3, width: 224, color: { dark: "#111611", light: "#ffffff" } })).replace("<svg ", '<svg x="793" y="1077" ');
   const background = theme === "ivory" ? "#efe8d8" : theme === "terminal" ? "url(#terminal-bg)" : theme === "aurora" ? "url(#aurora-bg)" : "#090c0a";
@@ -97,12 +97,13 @@ type ShareProfile = NonNullable<Awaited<ReturnType<typeof getShareProfile>>>;
 type CardProps = { p: ShareProfile; background: string; accent: string; foreground: string; pattern: string; qr: string; theme: keyof typeof themes };
 
 function LegacyCard({ p, background, accent, foreground, pattern, qr, theme, period, tall }: CardProps & { period: "month" | "all"; tall: boolean }) {
-  const exact = p.showExactTokens ? formatTokenCount(p.processedTokens) : "PRIVATE"; const codexPercent = Math.round((p.codexTokens / Math.max(1, p.processedTokens)) * 100);
+  const exact = p.showExactTokens ? formatTokenCount(p.processedTokens) : "PRIVATE";
+  const sourceMix = p.sources.map((row) => `${sourceLabel(row.source).toUpperCase()} ${Math.round((row.tokens / Math.max(1, p.processedTokens)) * 100)}%`).join(" · ");
   return <div style={{ width: "100%", height: "100%", boxSizing: "border-box", display: "flex", flexDirection: "column", justifyContent: "space-between", background, color: foreground, padding: tall ? 78 : 64, fontFamily: "Arial", position: "relative", overflow: "hidden" }}>
     <div style={{ position: "absolute", inset: 0, display: "flex", opacity: theme === "ivory" ? .45 : .7, backgroundImage: pattern, backgroundSize: theme === "ivory" ? "32px 32px" : "42px 42px" }} />
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}><div style={{ display: "flex", fontSize: 34, fontWeight: 900, letterSpacing: -2 }}>LovTokens<span style={{ color: accent }}>/</span></div><div style={{ display: "flex", fontSize: 16, letterSpacing: 4 }}>{period === "month" ? "THIS MONTH · UTC" : "ALL-TIME PORTFOLIO"}</div></div>
     <div style={{ display: "flex", flexDirection: "column" }}><div style={{ display: "flex", fontSize: tall ? 38 : 28, opacity: .62 }}>@{p.isAnonymous ? `anon-${p.handle.slice(-4)}` : p.handle}</div><div style={{ display: "flex", fontSize: tall ? 62 : 46, fontWeight: 800, marginTop: 8 }}>{p.displayName}</div><div style={{ display: "flex", color: accent, fontSize: tall ? 180 : 132, fontWeight: 900, letterSpacing: -9, lineHeight: .9, marginTop: tall ? 130 : 45 }}>{exact}</div>{p.showExactTokens && <div style={{ display: "flex", fontSize: 18, letterSpacing: 5, marginTop: 22, opacity: .58 }}>TOKENS PROCESSED</div>}</div>
-    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}><div style={{ display: "flex", flexDirection: "column", gap: 20 }}><div style={{ display: "flex", gap: 52 }}>{p.showRank && <Metric label="GLOBAL RANK" value={p.rank ? `#${p.rank}` : "—"} />} {p.showRank && <Metric label="PERCENTILE" value={`TOP ${p.percentile < 1 ? p.percentile.toFixed(1) : Math.round(p.percentile)}%`} />}<Metric label="ACTIVE DAYS" value={String(p.activeDays)} /></div><div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 15, letterSpacing: 2 }}><div style={{ width: 300, height: 8, display: "flex", background: "#647067" }}><div style={{ width: `${codexPercent}%`, background: accent }} /></div><span>CODEX {codexPercent}% · CLAUDE {100 - codexPercent}%</span></div><div style={{ alignSelf: "flex-start", display: "flex", border: `1px solid ${accent}`, color: accent, padding: "10px 14px", fontSize: 16, letterSpacing: 2 }}>{achievementFor(p.processedTokens, p.activeDays, p.codexTokens, p.claudeTokens).toUpperCase()}</div><div style={{ display: "flex", fontSize: 13, opacity: .58 }}>Usage is not a productivity score · LovTokens</div></div><img alt="Profile QR code" src={qr} width={tall ? 170 : 130} height={tall ? 170 : 130} /></div>
+    <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}><div style={{ display: "flex", flexDirection: "column", gap: 20 }}><div style={{ display: "flex", gap: 52 }}>{p.showRank && <Metric label="GLOBAL RANK" value={p.rank ? `#${p.rank}` : "—"} />} {p.showRank && <Metric label="PERCENTILE" value={`TOP ${p.percentile < 1 ? p.percentile.toFixed(1) : Math.round(p.percentile)}%`} />}<Metric label="ACTIVE DAYS" value={String(p.activeDays)} /></div><div style={{ display: "flex", alignItems: "center", gap: 18, fontSize: 15, letterSpacing: 2 }}><span>{sourceMix || "AGENT DATA PRIVATE"}</span></div><div style={{ alignSelf: "flex-start", display: "flex", border: `1px solid ${accent}`, color: accent, padding: "10px 14px", fontSize: 16, letterSpacing: 2 }}>{achievementFor(p.processedTokens, p.activeDays, p.codexTokens, p.claudeTokens).toUpperCase()}</div><div style={{ display: "flex", fontSize: 13, opacity: .58 }}>Usage is not a productivity score · LovTokens</div></div><img alt="Profile QR code" src={qr} width={tall ? 170 : 130} height={tall ? 170 : 130} /></div>
   </div>;
 }
 

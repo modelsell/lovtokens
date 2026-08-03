@@ -1,5 +1,5 @@
 import { getD1 } from "./runtime";
-export async function getPrivateSummary(userId: string) { const db = await getD1(); if (!db) return null; const profile = await db.prepare("SELECT * FROM profiles WHERE user_id=?1").bind(userId).first<Record<string, unknown>>(); if (!profile) return null; const [usage, devices] = await Promise.all([db.prepare(`SELECT COALESCE(SUM(input_tokens_total+output_tokens_total),0) total, COALESCE(SUM(CASE WHEN utc_date=date('now') THEN input_tokens_total+output_tokens_total ELSE 0 END),0) today, COALESCE(SUM(CASE WHEN utc_date>=date('now','start of month') THEN input_tokens_total+output_tokens_total ELSE 0 END),0) month, COALESCE(SUM(CASE WHEN source='codex' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) codex_tokens, COALESCE(SUM(CASE WHEN source='claude-code' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) claude_tokens, COUNT(DISTINCT utc_date) active_days FROM usage_daily WHERE user_id=?1 AND quarantined=0`).bind(userId).first<Record<string, unknown>>(), db.prepare("SELECT COUNT(*) active_devices,MAX(last_synced_at) last_synced_at FROM devices WHERE user_id=?1 AND status='active'").bind(userId).first<Record<string, unknown>>()]); return { profile, total: Number(usage?.total || 0), today: Number(usage?.today || 0), month: Number(usage?.month || 0), codexTokens: Number(usage?.codex_tokens || 0), claudeTokens: Number(usage?.claude_tokens || 0), activeDays: Number(usage?.active_days || 0), activeDevices: Number(devices?.active_devices || 0), lastSyncedAt: devices?.last_synced_at ? Number(devices.last_synced_at) : null }; }
+export async function getPrivateSummary(userId: string) { const db = await getD1(); if (!db) return null; const profile = await db.prepare("SELECT * FROM profiles WHERE user_id=?1").bind(userId).first<Record<string, unknown>>(); if (!profile) return null; const [usage, devices] = await Promise.all([db.prepare(`SELECT COALESCE(SUM(input_tokens_total+output_tokens_total),0) total, COALESCE(SUM(CASE WHEN utc_date=date('now') THEN input_tokens_total+output_tokens_total ELSE 0 END),0) today, COALESCE(SUM(CASE WHEN utc_date>=date('now','start of month') THEN input_tokens_total+output_tokens_total ELSE 0 END),0) month, COALESCE(SUM(CASE WHEN source='codex' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) codex_tokens, COALESCE(SUM(CASE WHEN source='claude-code' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) claude_tokens, COALESCE(SUM(CASE WHEN source='workbuddy' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) workbuddy_tokens, COUNT(DISTINCT utc_date) active_days FROM usage_daily WHERE user_id=?1 AND quarantined=0`).bind(userId).first<Record<string, unknown>>(), db.prepare("SELECT COUNT(*) active_devices,MAX(last_synced_at) last_synced_at FROM devices WHERE user_id=?1 AND status='active'").bind(userId).first<Record<string, unknown>>()]); return { profile, total: Number(usage?.total || 0), today: Number(usage?.today || 0), month: Number(usage?.month || 0), codexTokens: Number(usage?.codex_tokens || 0), claudeTokens: Number(usage?.claude_tokens || 0), workbuddyTokens: Number(usage?.workbuddy_tokens || 0), activeDays: Number(usage?.active_days || 0), activeDevices: Number(devices?.active_devices || 0), lastSyncedAt: devices?.last_synced_at ? Number(devices.last_synced_at) : null }; }
 
 export async function getDashboardDetails(userId: string) {
   const db = await getD1(); if (!db) return null;
@@ -23,6 +23,7 @@ export async function getAchievementMetrics(userId: string) {
     db.prepare(`SELECT
       COALESCE(SUM(CASE WHEN source='codex' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) codex_tokens,
       COALESCE(SUM(CASE WHEN source='claude-code' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) claude_tokens,
+      COALESCE(SUM(CASE WHEN source='workbuddy' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) workbuddy_tokens,
       COALESCE(SUM(cache_read_tokens),0) cache_tokens,
       COUNT(DISTINCT CASE WHEN model<>'' THEN model END) model_count,
       COUNT(DISTINCT utc_date) active_days,
@@ -44,6 +45,7 @@ export async function getAchievementMetrics(userId: string) {
   return {
     codexTokens: Number(aggregate?.codex_tokens || 0),
     claudeTokens: Number(aggregate?.claude_tokens || 0),
+    workbuddyTokens: Number(aggregate?.workbuddy_tokens || 0),
     cacheTokens: Number(aggregate?.cache_tokens || 0),
     modelCount: Number(aggregate?.model_count || 0),
     activeDays: Number(aggregate?.active_days || 0),
