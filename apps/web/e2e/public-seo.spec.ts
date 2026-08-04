@@ -64,7 +64,7 @@ test("Chinese routes render complete localized pages and preserve the locale in 
   expect(docs).toContain(`hrefLang="en" href="${testOrigin}/docs"`);
 
   await page.goto("/docs");
-  await page.getByRole("link", { name: "切换到中文" }).click();
+  await page.locator(".site-header").getByRole("combobox", { name: "Language" }).selectOption("zh");
   await expect(page).toHaveURL(/\/zh\/docs$/);
   await expect(page.getByRole("heading", { name: "一条命令，边界清晰。" })).toBeVisible();
   await page.getByRole("link", { name: "统计方法", exact: true }).first().click();
