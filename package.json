@@ -18,6 +18,7 @@
     "check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "db:generate": "pnpm --filter @lovtokens/web db:generate",
     "db:migrate:local": "pnpm --filter @lovtokens/web db:migrate:local",
+    "db:seed:local": "pnpm --filter @lovtokens/web db:seed:local",
     "preview": "pnpm --filter @lovtokens/web preview",
     "deploy": "pnpm --filter @lovtokens/web deploy"
   }
