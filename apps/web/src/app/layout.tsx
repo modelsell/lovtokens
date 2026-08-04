@@ -23,9 +23,20 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const viewport: Viewport = { colorScheme: "light", themeColor: "#f1f0ea", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { colorScheme: "light dark", themeColor: "#f1f0ea", width: "device-width", initialScale: 1 };
+
+const themeScript = `(() => {
+  try {
+    const saved = localStorage.getItem("lovtokens-theme");
+    const preference = saved === "light" || saved === "dark" || saved === "system" ? saved : "system";
+    const theme = preference === "system" ? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : preference;
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.themePreference = preference;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", theme === "dark" ? "#111411" : "#f1f0ea");
+  } catch {}
+})();`;
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const [locale, viewer] = await Promise.all([getLocale(), getViewer()]);
-  return <html data-scroll-behavior="smooth" lang={locale === "zh" ? "zh-CN" : "en"}><body><SiteHeader locale={locale} viewer={viewer} /><main>{children}</main><SiteFooter locale={locale} /></body></html>;
+  return <html data-scroll-behavior="smooth" lang={locale === "zh" ? "zh-CN" : "en"} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body><SiteHeader locale={locale} viewer={viewer} /><main>{children}</main><SiteFooter locale={locale} /></body></html>;
 }

@@ -6,6 +6,7 @@ import type { Viewer } from "@/lib/viewer";
 import { Brand } from "./brand";
 import { LocaleLink } from "./locale-link";
 import { SignOutButton } from "./sign-out-button";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export async function SiteHeader({ locale, viewer }: { locale: Locale; viewer: Viewer }) {
   const currentPath = await getRequestedPath();
@@ -21,6 +22,7 @@ export async function SiteHeader({ locale, viewer }: { locale: Locale; viewer: V
           <LocaleLink href={link("/blog")} locale={locale}>{t(locale, "Journal")}</LocaleLink>
         </nav>
         <div className="header-actions">
+          <ThemeSwitcher locale={locale} />
           <LocaleLink ariaLabel={locale === "zh" ? "Switch to English" : "切换到中文"} className="language-switch" href={localePath(currentPath, locale === "zh" ? "en" : "zh")} hrefLang={locale === "zh" ? "en" : "zh-CN"} locale={locale} reload>{locale === "zh" ? "EN" : "中文"}</LocaleLink>
           <a aria-label={t(locale, "LovTokens source code on GitHub")} className="icon-link" href="https://github.com/modelsell/lovtokens" rel="noreferrer" target="_blank"><Code2 size={17} /></a>
           {viewer ? <AccountMenu locale={locale} viewer={viewer} /> : <><LocaleLink className="header-login" href={link("/login")} locale={locale}>{t(locale, "Sign in")}</LocaleLink><LocaleLink className="header-cta" href={link("/register")} locale={locale}>{t(locale, "Create account")}</LocaleLink></>}
