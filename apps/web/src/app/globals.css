@@ -419,6 +419,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .achievement-badge-section > header p { color: var(--muted); font-size: 11px; line-height: 1.6; margin: 8px 0 0; max-width: 650px; }
 .achievement-milestone-section { border-top: 1px solid var(--line); padding-top: 42px; }
 .achievement-monthly-section { border-top: 1px solid var(--line); padding-top: 42px; }
+.achievement-legendary-section { border-top: 1px solid #d7c9a4; padding-top: 42px; }
+.achievement-legendary-section > header .eyebrow { color: #86641b; }
 .achievement-badge-grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
 .achievement-badge-card { --badge-accent: #d69a63; --badge-dark: #5f321c; --badge-light: #f0c696; background: linear-gradient(180deg, #fdfdfb, var(--paper)); border: 1px solid var(--line); border-radius: 20px; display: grid; grid-template-rows: auto 1fr auto; isolation: isolate; min-width: 0; overflow: hidden; transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease; }
 .achievement-badge-card:not([data-locked]):hover { border-color: #b8bbb2; box-shadow: 0 18px 44px rgba(28,34,28,.12); transform: translateY(-4px); }
@@ -427,6 +429,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .achievement-badge-card[data-tier="amethyst"] { --badge-accent: #c49aef; --badge-dark: #654293; --badge-light: #e5d2f7; }
 .achievement-badge-card[data-tier="gold"] { --badge-accent: #f2d27f; --badge-dark: #8b5d19; --badge-light: #fae9b5; }
 .achievement-badge-card[data-tier="monthly"] { --badge-accent: #cfddf2; --badge-dark: #465f94; --badge-light: #e5ecf8; }
+.achievement-badge-card[data-tier="legendary"] { --badge-accent: #f2c65d; --badge-dark: #4b286d; --badge-light: #fae4a3; }
+.achievement-badge-card[data-tier="legendary"]:not([data-locked]) { border-color: #d8bd75; box-shadow: 0 10px 30px rgba(87,55,105,.1); }
 .achievement-badge-visual { align-items: center; aspect-ratio: 1.08; background: radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--badge-accent) 30%, #253129) 0, #172019 54%, #0c110d 100%); border: 1px solid rgba(255,255,255,.08); border-radius: 15px; display: flex; height: auto; justify-content: center; margin: 10px 10px 0; overflow: hidden; position: relative; }
 .achievement-badge-visual::before { border: 1px solid rgba(255,255,255,.08); border-radius: 50%; box-shadow: 0 0 0 34px rgba(255,255,255,.025), 0 0 0 68px rgba(255,255,255,.018); content: ""; height: 58%; pointer-events: none; position: absolute; width: 58%; }
 .achievement-badge-visual::after { background: radial-gradient(ellipse, rgba(0,0,0,.42), transparent 70%); bottom: 4%; content: ""; height: 12%; left: 18%; pointer-events: none; position: absolute; width: 64%; }

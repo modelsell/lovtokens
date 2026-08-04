@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { AchievementBadge, type AchievementBadgeData } from "@/components/achievement-badge";
-import { advancedAchievements, explorationAchievements } from "@/lib/achievement-catalog";
+import { advancedAchievements, explorationAchievements, legendaryAchievements } from "@/lib/achievement-catalog";
 import { getSession } from "@/lib/auth";
 import { MILESTONE_THRESHOLDS } from "@/lib/certificates";
 import { formatTokenCount } from "@/lib/format";
@@ -9,11 +9,11 @@ import { getLocale } from "@/lib/i18n-server";
 import { getAchievementMetrics, getAchievementsForUser, getCertificatesForUser, getPrivateSummary } from "@/lib/private-repository";
 
 const milestoneDetails: Array<{ mark: string; tier: AchievementBadgeData["tier"]; zh: [string, string]; en: [string, string] }> = [
-  { mark: "I", tier: "bronze", zh: ["青铜起点", "完成第一个百万 Token，开启你的收藏序列。"], en: ["Bronze Origin", "Complete the first million tokens and begin your collection."] },
-  { mark: "II", tier: "jade", zh: ["翡翠进阶", "累计处理一千万 Token，进入稳定活跃阶段。"], en: ["Jade Momentum", "Process ten million tokens and enter sustained activity."] },
-  { mark: "III", tier: "sapphire", zh: ["蓝宝石信标", "累计处理一亿 Token，建立清晰的长期使用轨迹。"], en: ["Sapphire Signal", "Process one hundred million tokens and establish a long-term signal."] },
-  { mark: "IV", tier: "amethyst", zh: ["紫晶轨道", "累计处理十亿 Token，进入十亿级使用轨道。"], en: ["Amethyst Orbit", "Process one billion tokens and enter the billion-token orbit."] },
-  { mark: "V", tier: "gold", zh: ["鎏金传奇", "累计处理百亿 Token，完成最高等级里程碑。"], en: ["Gilded Legend", "Process ten billion tokens and complete the highest milestone."] },
+  { mark: "I", tier: "bronze", zh: ["青铜起点", "累计处理一亿 Token，开启你的收藏序列。"], en: ["Bronze Origin", "Process one hundred million tokens and begin your collection."] },
+  { mark: "II", tier: "jade", zh: ["翡翠进阶", "累计处理十亿 Token，进入稳定活跃阶段。"], en: ["Jade Momentum", "Process one billion tokens and enter sustained activity."] },
+  { mark: "III", tier: "sapphire", zh: ["蓝宝石信标", "累计处理百亿 Token，建立清晰的长期使用轨迹。"], en: ["Sapphire Signal", "Process ten billion tokens and establish a long-term signal."] },
+  { mark: "IV", tier: "amethyst", zh: ["紫晶轨道", "累计处理五百亿 Token，进入高阶使用轨道。"], en: ["Amethyst Orbit", "Process fifty billion tokens and enter an advanced usage orbit."] },
+  { mark: "V", tier: "gold", zh: ["鎏金传奇", "累计处理一千亿 Token，完成最高等级里程碑。"], en: ["Gilded Legend", "Process one hundred billion tokens and complete the highest milestone."] },
 ];
 
 export default async function CertificatesDashboard() {
@@ -51,6 +51,7 @@ export default async function CertificatesDashboard() {
   });
   const exploration = explorationAchievements(metrics, locale, earned);
   const advanced = advancedAchievements(metrics, locale, earned);
+  const legendary = legendaryAchievements(metrics, locale, earned);
   const monthly: AchievementBadgeData[] = certificates.filter((row) => String(row.kind) === "monthly").map((row) => ({
     key: String(row.id),
     title: locale === "zh" ? `${String(row.period)} 月度徽章` : `${String(row.period)} Monthly Badge`,
@@ -63,7 +64,7 @@ export default async function CertificatesDashboard() {
     certificateId: String(row.id),
     issuedAt: Number(row.issued_at),
   }));
-  const allAchievements = [...exploration, ...advanced, ...milestones];
+  const allAchievements = [...exploration, ...advanced, ...legendary, ...milestones];
   const achievementCount = allAchievements.length + monthly.length;
   const unlockedCount = monthly.length + allAchievements.filter((achievement) => achievement.unlocked).length;
 
@@ -79,6 +80,10 @@ export default async function CertificatesDashboard() {
     <section className="achievement-badge-section">
       <header><span className="eyebrow">{locale === "zh" ? "进阶收藏" : "ADVANCED COLLECTION"}</span><h2>{locale === "zh" ? "为长期探索者准备的稀有徽章" : "Rare badges for long-running explorers"}</h2><p>{locale === "zh" ? "跨智能体、模型、会话、活跃周期与缓存阶梯继续扩展收藏。" : "Expand the collection across agents, models, sessions, activity rhythms, and cache tiers."}</p></header>
       <div className="achievement-badge-grid achievement-special-grid">{advanced.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} />)}</div>
+    </section>
+    <section className="achievement-badge-section achievement-legendary-section">
+      <header><span className="eyebrow">{locale === "zh" ? "传奇收藏" : "LEGENDARY COLLECTION"}</span><h2>{locale === "zh" ? "值得长期追逐的终局徽章" : "Endgame badges worth a long pursuit"}</h2><p>{locale === "zh" ? "从三智能体十亿级驾驭到千亿 Token 宇宙，这组徽章为持续数月乃至一年的收藏旅程保留。" : "From billion-scale mastery across three agents to a hundred-billion-token cosmos, these badges reward pursuits lasting months or even years."}</p></header>
+      <div className="achievement-badge-grid achievement-special-grid">{legendary.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} />)}</div>
     </section>
     <section className="achievement-badge-section achievement-milestone-section">
       <header><span className="eyebrow">{locale === "zh" ? "里程碑系列" : "MILESTONE SERIES"}</span><h2>{locale === "zh" ? "带证明资料的 Token 收藏徽章" : "Token badges with proof records"}</h2><p>{locale === "zh" ? "达到累计 Token 门槛后生成独立编号、证明页面与可下载收藏卡。" : "Reach a lifetime token threshold to receive an independent ID, proof page, and downloadable collectible cards."}</p></header>

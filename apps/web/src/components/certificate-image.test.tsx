@@ -35,11 +35,11 @@ describe("CertificateImage", () => {
   });
 
   it("assigns a distinct collectible tier to each token milestone", () => {
-    expect(achievementCardThemeFor("milestone", 1_000_000).code).toBe("M—01");
-    expect(achievementCardThemeFor("milestone", 10_000_000).code).toBe("M—02");
-    expect(achievementCardThemeFor("milestone", 100_000_000).code).toBe("M—03");
-    expect(achievementCardThemeFor("milestone", 1_000_000_000).code).toBe("M—04");
-    expect(achievementCardThemeFor("milestone", 10_000_000_000).code).toBe("M—05");
+    expect(achievementCardThemeFor("milestone", 100_000_000).code).toBe("M—01");
+    expect(achievementCardThemeFor("milestone", 1_000_000_000).code).toBe("M—02");
+    expect(achievementCardThemeFor("milestone", 10_000_000_000).code).toBe("M—03");
+    expect(achievementCardThemeFor("milestone", 50_000_000_000).code).toBe("M—04");
+    expect(achievementCardThemeFor("milestone", 100_000_000_000).code).toBe("M—05");
     expect(achievementCardThemeFor("monthly", 10_000_000_000).code).toBe("A—MONTH");
   });
 });

@@ -10,7 +10,7 @@ export type AchievementBadgeData = {
   title: string;
   description: string;
   mark: string;
-  tier: "bronze" | "jade" | "sapphire" | "amethyst" | "gold" | "monthly" | "special";
+  tier: "bronze" | "jade" | "sapphire" | "amethyst" | "gold" | "monthly" | "special" | "legendary";
   tokens: number;
   target: number;
   unlocked: boolean;

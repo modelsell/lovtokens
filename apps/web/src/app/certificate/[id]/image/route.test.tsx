@@ -31,7 +31,7 @@ import { GET } from "./route";
 import { getCertificate } from "@/lib/repository";
 
 describe("achievement image route", () => {
-  it.each([1_000_000, 10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000])("renders the %d milestone theme as a downloadable portrait SVG source", async (processedTokens) => {
+  it.each([100_000_000, 1_000_000_000, 10_000_000_000, 50_000_000_000, 100_000_000_000])("renders the %d milestone theme as a downloadable portrait SVG source", async (processedTokens) => {
     vi.mocked(getCertificate).mockResolvedValue({ ...certificate, period: String(processedTokens), processedTokens });
     const response = await GET(new Request("https://lovtokens.test/certificate/cert-100m/image?lang=zh&download=1"), {
       params: Promise.resolve({ id: "cert-100m" }),

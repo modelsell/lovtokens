@@ -2,7 +2,7 @@ import { signPayload } from "./crypto";
 import { achievementProgress, queryAchievementMetrics } from "./achievement-metrics";
 import { getD1, getRuntimeEnv } from "./runtime";
 
-export const MILESTONE_THRESHOLDS = [1_000_000, 10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000] as const;
+export const MILESTONE_THRESHOLDS = [100_000_000, 1_000_000_000, 10_000_000_000, 50_000_000_000, 100_000_000_000] as const;
 export async function issueEligibleCertificates(userId: string) {
   const db = await getD1(); if (!db) return; const env = await getRuntimeEnv(); const now = Math.floor(Date.now() / 1000);
   const stats = await db.prepare(`SELECT p.handle,p.display_name,COALESCE(SUM(ud.input_tokens_total+ud.output_tokens_total),0) total,AVG(CASE WHEN ud.coverage='complete' THEN 100.0 ELSE 75.0 END) coverage,MIN(ud.trust_level) trust_level FROM profiles p LEFT JOIN usage_daily ud ON ud.user_id=p.user_id AND ud.quarantined=0 WHERE p.user_id=?1 GROUP BY p.user_id`).bind(userId).first<Record<string, unknown>>(); if (!stats) return;
@@ -21,7 +21,7 @@ async function issueEligibleAchievements(db: D1Database, userId: string, earnedA
   const eligible = Object.entries(progress).filter(([key, value]) => value.value >= value.target && !earned.has(key));
   if (!eligible.length) return;
   await db.batch(eligible.map(([key, value]) => db.prepare("INSERT OR IGNORE INTO achievements (id,user_id,achievement_key,earned_at,metadata_json) VALUES (?1,?2,?3,?4,?5)")
-    .bind(crypto.randomUUID(), userId, key, earnedAt, JSON.stringify({ ruleVersion: 1, value: value.value, target: value.target }))));
+    .bind(crypto.randomUUID(), userId, key, earnedAt, JSON.stringify({ ruleVersion: 2, value: value.value, target: value.target }))));
 }
 
 type CertificatePayload = { userId: string; kind: string; period: string; processedTokens: number; coverage: number; trustLevel: string; displayName: string; handle: string; issuedAt: number; rank: number | null; percentile: number | null };

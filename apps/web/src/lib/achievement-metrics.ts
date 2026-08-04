@@ -1,4 +1,5 @@
 export type AchievementMetrics = {
+  totalTokens: number;
   codexTokens: number;
   claudeTokens: number;
   workbuddyTokens: number;
@@ -15,6 +16,7 @@ export type AchievementMetrics = {
 };
 
 export const EMPTY_ACHIEVEMENT_METRICS: AchievementMetrics = {
+  totalTokens: 0,
   codexTokens: 0,
   claudeTokens: 0,
   workbuddyTokens: 0,
@@ -32,26 +34,61 @@ export const EMPTY_ACHIEVEMENT_METRICS: AchievementMetrics = {
 
 export type AchievementProgress = { target: number; value: number };
 
+export const ACHIEVEMENT_TARGETS = {
+  "night-owl": 500_000_000,
+  "dual-agent": 50_000_000,
+  "streak-flame": 14,
+  "model-explorer": 6,
+  "cache-wizard": 1_000_000_000,
+  "weekend-builder": 12,
+  "deep-dive": 250_000_000,
+  "marathon-builder": 60,
+  "tri-agent-commander": 10_000_000,
+  "model-museum": 12,
+  "session-voyager": 1_000,
+  "output-forge": 50_000_000,
+  "thirty-day-flame": 60,
+  "twelve-week-serial": 24,
+  "hundred-day-expedition": 180,
+  "daily-supernova": 2_000_000_000,
+  "cache-mithril": 3_000_000_000,
+  "cache-legend": 50_000_000_000,
+  "agent-trinity": 1_000_000_000,
+  "model-constellation": 25,
+  "session-odyssey": 5_000,
+  "yearkeeper": 365,
+  "output-star": 1_000_000_000,
+  "night-sovereign": 10_000_000_000,
+  "token-cosmos": 100_000_000_000,
+} as const;
+
 export function achievementProgress(metrics: AchievementMetrics): Record<string, AchievementProgress> {
   return {
-    "night-owl": { value: metrics.nightTokens, target: 1_000_000 },
-    "dual-agent": { value: Math.min(metrics.codexTokens, metrics.claudeTokens), target: 1_000_000 },
-    "streak-flame": { value: metrics.longestStreak, target: 7 },
-    "model-explorer": { value: metrics.modelCount, target: 5 },
-    "cache-wizard": { value: metrics.cacheTokens, target: 50_000_000 },
-    "weekend-builder": { value: metrics.weekendDays, target: 5 },
-    "deep-dive": { value: metrics.maxDailyTokens, target: 10_000_000 },
-    "marathon-builder": { value: metrics.activeDays, target: 30 },
-    "tri-agent-commander": { value: Math.min(metrics.codexTokens, metrics.claudeTokens, metrics.workbuddyTokens), target: 1_000_000 },
-    "model-museum": { value: metrics.modelCount, target: 10 },
-    "session-voyager": { value: metrics.sessionCount, target: 500 },
-    "output-forge": { value: metrics.outputTokens, target: 10_000_000 },
-    "thirty-day-flame": { value: metrics.longestStreak, target: 30 },
-    "twelve-week-serial": { value: metrics.activeWeeks, target: 12 },
-    "hundred-day-expedition": { value: metrics.activeDays, target: 100 },
-    "daily-supernova": { value: metrics.maxDailyTokens, target: 1_000_000_000 },
-    "cache-mithril": { value: metrics.cacheTokens, target: 1_000_000_000 },
-    "cache-legend": { value: metrics.cacheTokens, target: 10_000_000_000 },
+    "night-owl": { value: metrics.nightTokens, target: ACHIEVEMENT_TARGETS["night-owl"] },
+    "dual-agent": { value: Math.min(metrics.codexTokens, metrics.claudeTokens), target: ACHIEVEMENT_TARGETS["dual-agent"] },
+    "streak-flame": { value: metrics.longestStreak, target: ACHIEVEMENT_TARGETS["streak-flame"] },
+    "model-explorer": { value: metrics.modelCount, target: ACHIEVEMENT_TARGETS["model-explorer"] },
+    "cache-wizard": { value: metrics.cacheTokens, target: ACHIEVEMENT_TARGETS["cache-wizard"] },
+    "weekend-builder": { value: metrics.weekendDays, target: ACHIEVEMENT_TARGETS["weekend-builder"] },
+    "deep-dive": { value: metrics.maxDailyTokens, target: ACHIEVEMENT_TARGETS["deep-dive"] },
+    "marathon-builder": { value: metrics.activeDays, target: ACHIEVEMENT_TARGETS["marathon-builder"] },
+    "tri-agent-commander": { value: Math.min(metrics.codexTokens, metrics.claudeTokens, metrics.workbuddyTokens), target: ACHIEVEMENT_TARGETS["tri-agent-commander"] },
+    "model-museum": { value: metrics.modelCount, target: ACHIEVEMENT_TARGETS["model-museum"] },
+    "session-voyager": { value: metrics.sessionCount, target: ACHIEVEMENT_TARGETS["session-voyager"] },
+    "output-forge": { value: metrics.outputTokens, target: ACHIEVEMENT_TARGETS["output-forge"] },
+    "thirty-day-flame": { value: metrics.longestStreak, target: ACHIEVEMENT_TARGETS["thirty-day-flame"] },
+    "twelve-week-serial": { value: metrics.activeWeeks, target: ACHIEVEMENT_TARGETS["twelve-week-serial"] },
+    "hundred-day-expedition": { value: metrics.activeDays, target: ACHIEVEMENT_TARGETS["hundred-day-expedition"] },
+    "daily-supernova": { value: metrics.maxDailyTokens, target: ACHIEVEMENT_TARGETS["daily-supernova"] },
+    "cache-mithril": { value: metrics.cacheTokens, target: ACHIEVEMENT_TARGETS["cache-mithril"] },
+    "cache-legend": { value: metrics.cacheTokens, target: ACHIEVEMENT_TARGETS["cache-legend"] },
+    "agent-trinity": { value: Math.min(metrics.codexTokens, metrics.claudeTokens, metrics.workbuddyTokens), target: ACHIEVEMENT_TARGETS["agent-trinity"] },
+    "model-constellation": { value: metrics.modelCount, target: ACHIEVEMENT_TARGETS["model-constellation"] },
+    "session-odyssey": { value: metrics.sessionCount, target: ACHIEVEMENT_TARGETS["session-odyssey"] },
+    "yearkeeper": { value: metrics.activeDays, target: ACHIEVEMENT_TARGETS.yearkeeper },
+    "output-star": { value: metrics.outputTokens, target: ACHIEVEMENT_TARGETS["output-star"] },
+    "night-sovereign": { value: metrics.nightTokens, target: ACHIEVEMENT_TARGETS["night-sovereign"] },
+    "token-cosmos": { value: metrics.totalTokens, target: ACHIEVEMENT_TARGETS["token-cosmos"] },
   };
 }
 
@@ -59,6 +96,7 @@ export async function queryAchievementMetrics(db: D1Database, userId: string): P
   const positiveUsage = "quarantined=0 AND input_tokens_total+output_tokens_total>0";
   const [aggregate, daily] = await Promise.all([
     db.prepare(`SELECT
+      COALESCE(SUM(input_tokens_total+output_tokens_total),0) total_tokens,
       COALESCE(SUM(CASE WHEN source='codex' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) codex_tokens,
       COALESCE(SUM(CASE WHEN source='claude-code' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) claude_tokens,
       COALESCE(SUM(CASE WHEN source='workbuddy' THEN input_tokens_total+output_tokens_total ELSE 0 END),0) workbuddy_tokens,
@@ -86,6 +124,7 @@ export async function queryAchievementMetrics(db: D1Database, userId: string): P
   }
 
   return {
+    totalTokens: Number(aggregate?.total_tokens || 0),
     codexTokens: Number(aggregate?.codex_tokens || 0),
     claudeTokens: Number(aggregate?.claude_tokens || 0),
     workbuddyTokens: Number(aggregate?.workbuddy_tokens || 0),

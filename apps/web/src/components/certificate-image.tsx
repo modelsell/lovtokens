@@ -24,10 +24,10 @@ type CardTheme = {
 };
 
 const milestoneThemes: Array<{ minimum: number; theme: CardTheme }> = [
-  { minimum: 10_000_000_000, theme: { code: "M—05", mark: "V", name: { en: "Gilded Legend", zh: "鎏金传奇" }, background: "#18140c", accent: "#f2d27f", secondary: "#9c681f", pattern: "repeating-linear-gradient(118deg,rgba(242,210,127,.1) 0px,rgba(242,210,127,.1) 1px,transparent 1px,transparent 30px)" } },
-  { minimum: 1_000_000_000, theme: { code: "M—04", mark: "IV", name: { en: "Amethyst Orbit", zh: "紫晶轨道" }, background: "#151020", accent: "#c49aef", secondary: "#684697", pattern: "repeating-radial-gradient(circle at 50% 35%,transparent 0 31px,rgba(196,154,239,.11) 32px 33px)" } },
-  { minimum: 100_000_000, theme: { code: "M—03", mark: "III", name: { en: "Sapphire Signal", zh: "蓝宝石信标" }, background: "#0c1520", accent: "#79c5f2", secondary: "#305e9f", pattern: "linear-gradient(rgba(121,197,242,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(121,197,242,.07) 1px,transparent 1px)" } },
-  { minimum: 10_000_000, theme: { code: "M—02", mark: "II", name: { en: "Jade Momentum", zh: "翡翠进阶" }, background: "#0e1813", accent: "#8ad9a4", secondary: "#326b49", pattern: "repeating-linear-gradient(135deg,rgba(138,217,164,.08) 0px,rgba(138,217,164,.08) 1px,transparent 1px,transparent 34px)" } },
+  { minimum: 100_000_000_000, theme: { code: "M—05", mark: "V", name: { en: "Gilded Legend", zh: "鎏金传奇" }, background: "#18140c", accent: "#f2d27f", secondary: "#9c681f", pattern: "repeating-linear-gradient(118deg,rgba(242,210,127,.1) 0px,rgba(242,210,127,.1) 1px,transparent 1px,transparent 30px)" } },
+  { minimum: 50_000_000_000, theme: { code: "M—04", mark: "IV", name: { en: "Amethyst Orbit", zh: "紫晶轨道" }, background: "#151020", accent: "#c49aef", secondary: "#684697", pattern: "repeating-radial-gradient(circle at 50% 35%,transparent 0 31px,rgba(196,154,239,.11) 32px 33px)" } },
+  { minimum: 10_000_000_000, theme: { code: "M—03", mark: "III", name: { en: "Sapphire Signal", zh: "蓝宝石信标" }, background: "#0c1520", accent: "#79c5f2", secondary: "#305e9f", pattern: "linear-gradient(rgba(121,197,242,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(121,197,242,.07) 1px,transparent 1px)" } },
+  { minimum: 1_000_000_000, theme: { code: "M—02", mark: "II", name: { en: "Jade Momentum", zh: "翡翠进阶" }, background: "#0e1813", accent: "#8ad9a4", secondary: "#326b49", pattern: "repeating-linear-gradient(135deg,rgba(138,217,164,.08) 0px,rgba(138,217,164,.08) 1px,transparent 1px,transparent 34px)" } },
   { minimum: 0, theme: { code: "M—01", mark: "I", name: { en: "Bronze Origin", zh: "青铜起点" }, background: "#1a130f", accent: "#d69a63", secondary: "#754628", pattern: "radial-gradient(circle at 50% 35%,rgba(214,154,99,.14) 0 2px,transparent 3px)" } },
 ];
 
