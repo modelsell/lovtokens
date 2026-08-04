@@ -1,15 +1,14 @@
 import { Code2, LayoutDashboard, Menu, Settings, UserRound } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { localePath, t } from "@/lib/i18n";
-import { getRequestedPath } from "@/lib/i18n-server";
 import type { Viewer } from "@/lib/viewer";
 import { Brand } from "./brand";
+import { LanguageSwitcher } from "./language-switcher";
 import { LocaleLink } from "./locale-link";
 import { SignOutButton } from "./sign-out-button";
 import { ThemeSwitcher } from "./theme-switcher";
 
 export async function SiteHeader({ locale, viewer }: { locale: Locale; viewer: Viewer }) {
-  const currentPath = await getRequestedPath();
   const link = (path: string) => localePath(path, locale);
   return (
     <header className="site-header">
@@ -23,7 +22,7 @@ export async function SiteHeader({ locale, viewer }: { locale: Locale; viewer: V
         </nav>
         <div className="header-actions">
           <ThemeSwitcher locale={locale} />
-          <LocaleLink ariaLabel={locale === "zh" ? "Switch to English" : "切换到中文"} className="language-switch" href={localePath(currentPath, locale === "zh" ? "en" : "zh")} hrefLang={locale === "zh" ? "en" : "zh-CN"} locale={locale} reload>{locale === "zh" ? "EN" : "中文"}</LocaleLink>
+          <LanguageSwitcher locale={locale} />
           <a aria-label={t(locale, "LovTokens source code on GitHub")} className="icon-link" href="https://github.com/modelsell/lovtokens" rel="noreferrer" target="_blank"><Code2 size={17} /></a>
           {viewer ? <AccountMenu locale={locale} viewer={viewer} /> : <><LocaleLink className="header-login" href={link("/login")} locale={locale}>{t(locale, "Sign in")}</LocaleLink><LocaleLink className="header-cta" href={link("/register")} locale={locale}>{t(locale, "Create account")}</LocaleLink></>}
           <details className="mobile-menu"><summary aria-label={t(locale, "Open menu")}><Menu size={20} /></summary><nav><LocaleLink href={link("/leaderboard")} locale={locale}>{t(locale, "Leaderboard")}</LocaleLink><LocaleLink href={link("/methodology")} locale={locale}>{t(locale, "Methodology")}</LocaleLink><LocaleLink href={link("/docs")} locale={locale}>{t(locale, "Docs")}</LocaleLink><LocaleLink href={link("/blog")} locale={locale}>{t(locale, "Journal")}</LocaleLink>{viewer ? <><LocaleLink href={link("/dashboard")} locale={locale}>{t(locale, "Personal center")}</LocaleLink><LocaleLink href={link("/settings/account")} locale={locale}>{t(locale, "Account and security")}</LocaleLink><SignOutButton className="mobile-sign-out" locale={locale} /></> : <><LocaleLink href={link("/login")} locale={locale}>{t(locale, "Sign in")}</LocaleLink><LocaleLink href={link("/register")} locale={locale}>{t(locale, "Create account")}</LocaleLink></>}</nav></details>

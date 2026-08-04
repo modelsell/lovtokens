@@ -83,7 +83,7 @@ function CollectorCertificateImage({ certificate: c, locale, proof, qr }: Props)
         <div style={{ alignItems: "center", background: theme.background, border: `2px solid ${theme.accent}`, borderRadius: 999, display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", width: "100%" }}>
           <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: 5, opacity: .68 }}>{monthly ? "ARCHIVE EDITION" : "MILESTONE TIER"}</span>
           <strong style={{ backgroundImage: foil, color: "transparent", display: "flex", fontFamily: "Georgia, serif", fontSize: 132, letterSpacing: -9, lineHeight: .9, marginTop: 9, WebkitBackgroundClip: "text" }}>{theme.mark}</strong>
-          <span style={{ color: theme.accent, fontSize: 15, fontWeight: 900, letterSpacing: 3, marginTop: 8 }}>{theme.name[locale].toUpperCase()}</span>
+          <span style={{ color: theme.accent, fontSize: 15, fontWeight: 900, letterSpacing: 3, marginTop: 8 }}>{theme.name[locale === "zh" || locale === "zh-tw" ? "zh" : "en"].toUpperCase()}</span>
         </div>
       </div>
       <h1 style={{ fontFamily: "Georgia, serif", fontSize: 49, fontWeight: 500, letterSpacing: -2.5, lineHeight: 1, margin: "32px 0 0", textAlign: "center" }}>{title}</h1>
@@ -140,7 +140,7 @@ function ArchiveCertificateImage({ certificate: c, locale, proof, qr }: Props) {
     </header>
 
     <div style={{ display: "flex", flexDirection: "column", marginTop: 92, position: "relative" }}>
-      <div style={{ alignItems: "center", display: "flex", gap: 12 }}><span style={{ background: accent, color: "#f1ecdf", display: "flex", fontSize: 12, fontWeight: 900, letterSpacing: 3, padding: "10px 13px" }}>{locale === "zh" ? "典藏档案版" : "ARCHIVE EDITION"}</span><span style={{ color: accent, fontSize: 14, fontWeight: 900, letterSpacing: 3 }}>{theme.name[locale].toUpperCase()}</span></div>
+      <div style={{ alignItems: "center", display: "flex", gap: 12 }}><span style={{ background: accent, color: "#f1ecdf", display: "flex", fontSize: 12, fontWeight: 900, letterSpacing: 3, padding: "10px 13px" }}>{locale === "zh" ? "典藏档案版" : "ARCHIVE EDITION"}</span><span style={{ color: accent, fontSize: 14, fontWeight: 900, letterSpacing: 3 }}>{theme.name[locale === "zh" || locale === "zh-tw" ? "zh" : "en"].toUpperCase()}</span></div>
       <h1 style={{ fontFamily: "Georgia, serif", fontSize: 58, fontWeight: 500, letterSpacing: -3.5, lineHeight: .98, margin: "31px 0 0", maxWidth: 790 }}>{title}</h1>
       <span style={{ fontFamily: "Georgia, serif", fontSize: 23, fontStyle: "italic", marginTop: 16, opacity: .58 }}>{revoked ? (locale === "zh" ? "身份已撤回" : "Identity withdrawn") : c.displayName}</span>
     </div>

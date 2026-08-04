@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { languageAlternates, siteName, t } from "@/lib/i18n";
+import { languageAlternates, localeDetails, siteName, t } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
 import { siteUrl } from "@/lib/runtime";
 import { getViewer } from "@/lib/viewer";
@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t(locale, "Privately count Codex, Claude Code, and WorkBuddy tokens, join transparent usage leaderboards, and create shareable AI token certificates."),
     applicationName: name,
     alternates: languageAlternates("/", locale),
-    openGraph: { title, description: t(locale, "Count it. Rank it. Share it."), type: "website", siteName: name, locale: locale === "zh" ? "zh_CN" : "en_US" },
+    openGraph: { title, description: t(locale, "Count it. Rank it. Share it."), type: "website", siteName: name, locale: localeDetails(locale).ogLocale },
     twitter: { card: "summary_large_image" },
     icons: { icon: "/icon.svg" },
   };
@@ -38,5 +38,5 @@ const themeScript = `(() => {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const [locale, viewer] = await Promise.all([getLocale(), getViewer()]);
-  return <html data-scroll-behavior="smooth" lang={locale === "zh" ? "zh-CN" : "en"} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body><SiteHeader locale={locale} viewer={viewer} /><main>{children}</main><SiteFooter locale={locale} /></body></html>;
+  return <html data-scroll-behavior="smooth" lang={localeDetails(locale).htmlLang} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body><SiteHeader locale={locale} viewer={viewer} /><main>{children}</main><SiteFooter locale={locale} /></body></html>;
 }

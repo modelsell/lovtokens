@@ -15,5 +15,5 @@ type Props = {
 
 export function LocaleLink({ locale, href, children, className, style, hrefLang, ariaLabel, reload = false }: Props) {
   const props = { href, className, style, hrefLang, "aria-label": ariaLabel };
-  return locale === "zh" || reload ? <a {...props}>{children}</a> : <Link {...props}>{children}</Link>;
+  return locale !== "en" || reload ? <a {...props}>{children}</a> : <Link {...props}>{children}</Link>;
 }

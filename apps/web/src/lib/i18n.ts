@@ -1,12 +1,74 @@
-export const locales = ["en", "zh"] as const;
+import de from "../locales/de.json";
+import es from "../locales/es.json";
+import fr from "../locales/fr.json";
+import ja from "../locales/ja.json";
+import ko from "../locales/ko.json";
+import ptBr from "../locales/pt-br.json";
+import ru from "../locales/ru.json";
+import zhTw from "../locales/zh-tw.json";
+
+export const locales = ["en", "zh", "zh-tw", "ja", "ko", "es", "fr", "de", "pt-br", "ru"] as const;
 export type Locale = (typeof locales)[number];
 
+export const localeOptions: ReadonlyArray<{ locale: Locale; label: string; htmlLang: string; ogLocale: string }> = [
+  { locale: "en", label: "English", htmlLang: "en", ogLocale: "en_US" },
+  { locale: "zh", label: "简体中文", htmlLang: "zh-CN", ogLocale: "zh_CN" },
+  { locale: "zh-tw", label: "繁體中文", htmlLang: "zh-TW", ogLocale: "zh_TW" },
+  { locale: "ja", label: "日本語", htmlLang: "ja", ogLocale: "ja_JP" },
+  { locale: "ko", label: "한국어", htmlLang: "ko", ogLocale: "ko_KR" },
+  { locale: "es", label: "Español", htmlLang: "es", ogLocale: "es_ES" },
+  { locale: "fr", label: "Français", htmlLang: "fr", ogLocale: "fr_FR" },
+  { locale: "de", label: "Deutsch", htmlLang: "de", ogLocale: "de_DE" },
+  { locale: "pt-br", label: "Português (Brasil)", htmlLang: "pt-BR", ogLocale: "pt_BR" },
+  { locale: "ru", label: "Русский", htmlLang: "ru", ogLocale: "ru_RU" },
+];
+
+export function isLocale(value: string | null | undefined): value is Locale {
+  return locales.includes(value as Locale);
+}
+
+export function resolveLocale(value: string | null | undefined): Locale | null {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase().replaceAll("_", "-");
+  if (normalized === "zh-tw" || normalized === "zh-hant" || normalized.startsWith("zh-hant-") || normalized === "zh-hk" || normalized === "zh-mo") return "zh-tw";
+  if (normalized === "zh" || normalized.startsWith("zh-")) return "zh";
+  if (normalized === "pt" || normalized.startsWith("pt-")) return "pt-br";
+  const exact = locales.find((locale) => locale === normalized);
+  if (exact) return exact;
+  const base = normalized.split("-")[0];
+  return locales.find((locale) => locale === base) ?? null;
+}
+
+export function localeFromPath(path: string): Locale | null {
+  const segment = path.split(/[/?#]/, 2)[1];
+  return segment ? resolveLocale(segment) : null;
+}
+
+export function localeDetails(locale: Locale) {
+  return localeOptions.find((option) => option.locale === locale) ?? localeOptions[0]!;
+}
+
 export function siteName(locale: Locale) {
-  return { en: "LovTokens", zh: "LovTokens" }[locale];
+  void locale;
+  return "LovTokens";
 }
 
 const zh: Record<string, string> = {
   "Your AI Token Portfolio": "你的 AI Token 档案",
+  "See your": "看清你的",
+  "AI coding usage.": "AI 编程用量。",
+  "LovTokens turns Codex, Claude Code, and WorkBuddy token usage into personal trends, model breakdowns, and an optional leaderboard.": "LovTokens 自动汇总 Codex、Claude Code 与 WorkBuddy 的 Token 使用量，生成个人趋势、模型分布和可选排行榜。",
+  "No conversations or code": "不上传对话和代码",
+  "Optional hourly updates": "可选每小时更新",
+  "Registration becomes a conversation.": "注册变成一次对话。",
+  "Users no longer need to understand the CLI, device codes, or settings pages first. The agent executes; the user still controls every identity and visibility choice.": "不再要求用户先理解 CLI、设备码和设置页面。Agent 负责执行，但每一项身份与公开选择仍由用户决定。",
+  "Copy the handoff": "复制短指令",
+  "Copy only the document URL and one execution sentence instead of the full guide.": "只复制文档地址和一句执行要求，不再粘贴整篇说明。",
+  "The agent reads the MD": "Agent 读取 MD",
+  "The production document contains identity checks, privacy boundaries, execution steps, and completion rules.": "生产 URL 文档包含身份确认、隐私边界、执行步骤和完成标准。",
+  "Register and sync": "自动注册与采集",
+  "Create the account and device, run the first sync, and optionally install an hourly task with daily update checks.": "创建账号和设备、首次同步，并可安装每小时执行、每天检查更新的本机任务。",
+  "For my current operating system, read and follow {{documentUrl}} to set up LovTokens—my private Codex, Claude Code, and WorkBuddy token usage dashboard—then return the registration and sync results.": "请根据我当前的操作系统，读取并执行 {{documentUrl}}，帮我配置 LovTokens——一个统计 Codex、Claude Code 和 WorkBuddy Token 用量且不上传对话与代码的个人数据看板，完成后把注册和同步结果告诉我。",
   "Privately count Codex, Claude Code, and WorkBuddy tokens, join transparent usage leaderboards, and create shareable AI token certificates.": "在本地安全统计 Codex、Claude Code 与 WorkBuddy Token，参与透明的使用量排行榜，并生成可分享的 AI Token 证书。",
   "Count it. Rank it. Share it.": "统计。排名。分享。",
   "Private by design · Open collector": "隐私优先 · 开源采集器",
@@ -330,17 +392,29 @@ const zh: Record<string, string> = {
   "Return to leaderboard": "返回排行榜",
 };
 
+const dictionaries: Partial<Record<Locale, Record<string, string>>> = { zh, "zh-tw": zhTw, ja, ko, es, fr, de, "pt-br": ptBr, ru };
+
 export function t(locale: Locale, value: string) {
-  return locale === "zh" ? zh[value] ?? value : value;
+  if (locale === "en") return value;
+  return dictionaries[locale]?.[value] ?? value;
 }
 
 export function localePath(path: string, locale: Locale) {
   if (!path.startsWith("/") || path.startsWith("/api/") || path.startsWith("/share/")) return path;
-  const clean = path === "/zh" ? "/" : path.replace(/^\/zh(?=\/|$)/, "") || "/";
-  return locale === "zh" ? `/zh${clean === "/" ? "" : clean}` : clean;
+  const suffixIndex = path.search(/[?#]/);
+  const pathname = suffixIndex === -1 ? path : path.slice(0, suffixIndex);
+  const suffix = suffixIndex === -1 ? "" : path.slice(suffixIndex);
+  const firstSegment = pathname.split("/")[1] ?? "";
+  const prefixedLocale = firstSegment === "en" ? "en" : resolveLocale(firstSegment);
+  const clean = prefixedLocale ? pathname.slice(firstSegment.length + 1) || "/" : pathname;
+  const prefix = locale === "en" ? "" : `/${locale}`;
+  return `${prefix}${clean === "/" ? "" : clean}${suffix}` || "/";
 }
 
 export function languageAlternates(path: string, locale: Locale = "en") {
   const clean = localePath(path, "en");
-  return { canonical: localePath(clean, locale), languages: { en: clean, "zh-CN": localePath(clean, "zh") } };
+  return {
+    canonical: localePath(clean, locale),
+    languages: Object.fromEntries(localeOptions.map((option) => [option.htmlLang, localePath(clean, option.locale)])),
+  };
 }
