@@ -18,7 +18,7 @@ export default async function HomePage() {
   const locale = await getLocale();
   const link = (path: string) => localePath(path, locale);
   const viewer = await getViewer();
-  const [leaders, viewerRank] = await Promise.all([getLeaderboard("month", "all", 3), viewer?.profile?.isPublic && viewer.profile.showRank ? getLeaderboardPosition(viewer.user.id, "month") : Promise.resolve(null)]);
+  const [leaders, viewerRank] = await Promise.all([getLeaderboard("month", "all", 10), viewer?.profile?.isPublic && viewer.profile.showRank ? getLeaderboardPosition(viewer.user.id, "month") : Promise.resolve(null)]);
   const tracked = leaders.reduce((sum, row) => sum + (row.showExactTokens ? row.processedTokens : 0), 0);
   const root = siteUrl();
   const name = siteName(locale);
