@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 export async function rasterizeSvgToPng(sourceUrl: string, width: number, height: number) {
   const response = await fetch(sourceUrl);
   if (!response.ok) throw new Error(`Unable to load image (${response.status})`);
@@ -26,27 +24,6 @@ export async function rasterizeSvgToPng(sourceUrl: string, width: number, height
   } finally {
     URL.revokeObjectURL(sourceObjectUrl);
   }
-}
-
-export function useRasterizedPng(sourceUrl: string | null, width: number, height: number) {
-  const [pngUrl, setPngUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!sourceUrl) return;
-    let active = true;
-    let objectUrl: string | null = null;
-    rasterizeSvgToPng(sourceUrl, width, height).then((blob) => {
-      if (!active) return;
-      objectUrl = URL.createObjectURL(blob);
-      setPngUrl(objectUrl);
-    }).catch(() => { if (active) setPngUrl(null); });
-    return () => {
-      active = false;
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-    };
-  }, [height, sourceUrl, width]);
-
-  return pngUrl;
 }
 
 export function triggerPngDownload(blob: Blob, filename: string) {
