@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AuthMethodsPanel } from "@/components/auth-methods-panel";
+import { ShareSignupAttribution } from "@/components/share-signup-attribution";
 import { resolveAuthMethods } from "@/lib/auth-options";
 import { localePath, t } from "@/lib/i18n";
 import { getLocale, localizedMetadata } from "@/lib/i18n-server";
@@ -16,5 +17,5 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   const [viewer, env] = await Promise.all([getViewer(), getRuntimeEnv()]);
   if (viewer) redirect(callbackURL);
   const methods = resolveAuthMethods(env, siteUrl());
-  return <section className="page-hero shell auth-page"><span className="eyebrow">{t(locale, "Private by default")}</span><h1>{t(locale, "Create your token portfolio.")}</h1><p>{t(locale, "Create an account, connect your collector, and choose exactly what becomes public.")}</p><div className="setup-panel"><h2>{t(locale, "Create account")}</h2><AuthMethodsPanel callbackURL={callbackURL} emailPassword={methods.emailPassword} github={methods.github} locale={locale} mode="sign-up" standalone /></div></section>;
+  return <section className="page-hero shell auth-page"><ShareSignupAttribution stage="register" /><span className="eyebrow">{t(locale, "Private by default")}</span><h1>{t(locale, "Create your token portfolio.")}</h1><p>{t(locale, "Create an account, connect your collector, and choose exactly what becomes public.")}</p><div className="setup-panel"><h2>{t(locale, "Create account")}</h2><AuthMethodsPanel callbackURL={callbackURL} emailPassword={methods.emailPassword} github={methods.github} locale={locale} mode="sign-up" standalone /></div></section>;
 }

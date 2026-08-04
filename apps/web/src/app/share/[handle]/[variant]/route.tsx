@@ -3,11 +3,12 @@ import { renderToStaticMarkup } from "react-dom/server.browser";
 import { achievementFor, formatTokenCount, sourceLabel } from "@/lib/format";
 import { getShareProfile } from "@/lib/repository";
 import { getShareBucket, siteUrl } from "@/lib/runtime";
+import { profilePreviewKey, shareThemes } from "@/lib/share-preview";
 import { svgImageDocument } from "@/lib/svg-image";
 /* eslint-disable @next/next/no-img-element -- the server-rendered SVG embeds the QR data URI directly */
 
 export const runtime = "nodejs";
-const sizes = { "profile.svg": [1080, 1350], "month.svg": [1200, 630], "lifetime-square.svg": [1080, 1080], "story.svg": [1080, 1920], "certificate.svg": [1600, 900] } as const;
+const sizes = { "profile.svg": [1080, 1350], "social.svg": [1200, 630], "month.svg": [1200, 630], "lifetime-square.svg": [1080, 1080], "story.svg": [1080, 1920], "certificate.svg": [1600, 900] } as const;
 const themes = {
   obsidian: { background: "#090c0a", accent: "#c8f06a", foreground: "#f6f7f3", pattern: "linear-gradient(rgba(200,240,106,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(200,240,106,.18) 1px,transparent 1px)" },
   terminal: { background: "linear-gradient(145deg,#06101d,#071c28)", accent: "#62d6ff", foreground: "#f3f7ff", pattern: "linear-gradient(rgba(98,214,255,.18) 1px,transparent 1px),linear-gradient(90deg,rgba(98,214,255,.18) 1px,transparent 1px)" },
@@ -16,8 +17,15 @@ const themes = {
 } as const;
 
 export async function GET(request: Request, { params }: { params: Promise<{ handle: string; variant: string }> }) {
-  const { handle, variant } = await params; const size = sizes[variant as keyof typeof sizes]; if (!size) return new Response("Unknown image format", { status: 404 });
+  const { handle, variant } = await params;
   const url = new URL(request.url); const theme = (url.searchParams.get("theme") || "obsidian") as keyof typeof themes; if (!themes[theme]) return new Response("Unknown theme", { status: 400 });
+  if (variant === "social.png") {
+    const p = await getShareProfile(handle, "all"); if (!p) return new Response("Profile is private or missing", { status: 404 });
+    const cached = await (await getShareBucket())?.get(profilePreviewKey(p.handle, p.statsVersion, p.privacyVersion, theme as (typeof shareThemes)[number]));
+    if (!cached) return Response.redirect(new URL("/share-fallback.png", request.url), 307);
+    return new Response(cached.body, { headers: { "content-type": "image/png", "cache-control": "public,max-age=31536000,immutable", etag: cached.httpEtag } });
+  }
+  const size = sizes[variant as keyof typeof sizes]; if (!size) return new Response("Unknown image format", { status: 404 });
   const period = variant === "month.svg" ? "month" : "all"; const p = await getShareProfile(handle, period); if (!p) return new Response("Profile is private or missing", { status: 404 });
   const cacheKey = `v11/${p.handle}/${p.statsVersion}-${p.privacyVersion}/${period}/${variant}/${theme}.svg`; const bucket = await getShareBucket(); const cached = await bucket?.get(cacheKey); if (cached) return new Response(cached.body, { headers: { "content-type": "image/svg+xml; charset=utf-8", "cache-control": "public,max-age=31536000,immutable", etag: cached.httpEtag } });
   const { background, accent, foreground, pattern } = themes[theme]; const profileUrl = `${siteUrl()}/u/${p.handle}`;

@@ -1,4 +1,4 @@
-import { integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { integer, primaryKey, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
@@ -157,6 +157,19 @@ export const achievements = sqliteTable("achievements", {
   metadataJson: text("metadata_json"),
 }, (table) => [
   uniqueIndex("achievements_user_key_unique").on(table.userId, table.achievementKey),
+]);
+
+export const shareEventsDaily = sqliteTable("share_events_daily", {
+  utcDate: text("utc_date").notNull(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  contentId: text("content_id").notNull(),
+  contentKind: text("content_kind").notNull(),
+  target: text("target").notNull(),
+  event: text("event").notNull(),
+  eventCount: integer("event_count").notNull().default(0),
+  updatedAt: integer("updated_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.utcDate, table.userId, table.contentId, table.contentKind, table.target, table.event] }),
 ]);
 
 export const authSchema = { user, session, account, verification };

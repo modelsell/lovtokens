@@ -6,6 +6,8 @@ import QRCode from "qrcode";
 import { ArrowLeft, CheckCircle2, Download, ExternalLink, FileKey2, Hash, ScanLine, ShieldCheck } from "lucide-react";
 import { JsonLd } from "@/components/json-ld";
 import { LocaleLink } from "@/components/locale-link";
+import { CertificateShareButton } from "@/components/certificate-share-button";
+import { ShareLandingTracker } from "@/components/share-landing-tracker";
 import { getSession } from "@/lib/auth";
 import { verifyPayload } from "@/lib/crypto";
 import { formatTokenCount, formatPercent } from "@/lib/format";
@@ -20,16 +22,21 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const certificate = await getCertificate(id);
   if (!certificate || (certificate.status === "active" && !certificate.indexable)) return { title: locale === "zh" ? "私密成就证明" : "Private achievement proof", robots: { index: false, follow: false } };
+  const title = `${certificate.displayName} · ${formatTokenCount(certificate.processedTokens)} ${locale === "zh" ? "Token 成就证明" : "Token Achievement Proof"}`;
+  const description = locale === "zh" ? `验证 ${certificate.displayName} 的 LovTokens 成就记录及密码学摘要。` : `Verify ${certificate.displayName}'s LovTokens achievement record and cryptographic digest.`;
+  const image = `/certificate/${encodeURIComponent(certificate.id)}/social.png?lang=${locale === "zh" ? "zh" : "en"}&style=collector`;
   return {
-    title: `${certificate.displayName} · ${formatTokenCount(certificate.processedTokens)} ${locale === "zh" ? "Token 成就证明" : "Token Achievement Proof"}`,
-    description: locale === "zh" ? `验证 ${certificate.displayName} 的 LovTokens 成就记录及密码学摘要。` : `Verify ${certificate.displayName}'s LovTokens achievement record and cryptographic digest.`,
+    title,
+    description,
     alternates: languageAlternates(`/certificate/${certificate.id}`, locale),
+    openGraph: { title, description, url: `/certificate/${certificate.id}`, type: "article", images: [{ url: image, width: 1080, height: 1350, type: "image/png", alt: title }] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }
 
-export default async function CertificatePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CertificatePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ share?: string }> }) {
   const locale = await getLocale();
-  const { id } = await params;
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const certificate = await getCertificate(id);
   const session = await getSession(await headers());
   const publiclyViewable = certificate?.status !== "active" || certificate?.indexable;
@@ -47,15 +54,17 @@ export default async function CertificatePage({ params }: { params: Promise<{ id
   const imageUrl = `/certificate/${encodeURIComponent(c.id)}/image?lang=${locale}&download=1`;
   const issuedDate = new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", { day: "numeric", month: "long", year: "numeric" }).format(new Date(c.issuedAt * 1000));
   const kindLabel = c.kind === "monthly" ? (locale === "zh" ? "月度成就" : "Monthly achievement") : (locale === "zh" ? "Token 里程碑" : "Token milestone");
+  const shareTitle = `${c.displayName} · ${formatTokenCount(c.processedTokens)} ${locale === "zh" ? "Token 成就" : "Token Achievement"}`;
   const proofLabel = proof === "signature-verified" ? (locale === "zh" ? "数字签名验证通过" : "Digital signature verified") : proof === "hash-verified" ? (locale === "zh" ? "数据摘要验证通过" : "Data digest verified") : (locale === "zh" ? "证明验证失败" : "Proof verification failed");
   let frozenPayload = c.payloadJson;
   try { frozenPayload = JSON.stringify(JSON.parse(c.payloadJson), null, 2); } catch { /* Preserve the original payload for forensic inspection. */ }
 
   return <main className="certificate-page">
     <div className="certificate-toolbar shell">
-      <LocaleLink href={localePath(c.handle === "revoked" ? "/leaderboard" : `/u/${c.handle}`, locale)} locale={locale}><ArrowLeft aria-hidden="true" size={16} />{locale === "zh" ? "返回个人主页" : "Back to profile"}</LocaleLink>
+      <LocaleLink className="share-certificate-conversion" href={localePath(c.handle === "revoked" ? "/leaderboard" : `/u/${c.handle}`, locale)} locale={locale}><ArrowLeft aria-hidden="true" size={16} />{locale === "zh" ? "返回个人主页" : "Back to profile"}</LocaleLink>
       <div>
         <span className="certificate-live-status" data-invalid={!proofValid || revoked || undefined}><span />{revoked ? (locale === "zh" ? "证明已撤销" : "Proof revoked") : proofLabel}</span>
+        {!revoked && c.indexable && <CertificateShareButton canPublishPreview={ownerViewable} className="certificate-download" id={c.id} initialOpen={query.share === "1"} locale={locale} processedTokens={c.processedTokens} siteOrigin={siteUrl()} title={shareTitle} />}
         <a className="certificate-download" download href={imageUrl}>{locale === "zh" ? "下载成就图片" : "Download achievement"}<Download aria-hidden="true" size={15} /></a>
       </div>
     </div>
@@ -112,6 +121,7 @@ export default async function CertificatePage({ params }: { params: Promise<{ id
     </section>
 
     <JsonLd data={{ "@context": "https://schema.org", "@type": "CreativeWork", name: `LovTokens Token Achievement ${c.id}`, url: proofUrl, dateCreated: new Date(c.issuedAt * 1000).toISOString(), identifier: c.id }} />
+    <ShareLandingTracker contentId={c.id} contentKind="certificate" conversionSelector=".share-certificate-conversion" />
   </main>;
 }
 

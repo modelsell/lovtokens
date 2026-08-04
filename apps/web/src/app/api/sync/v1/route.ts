@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     quarantined,
     visibility,
     profileUrl: device.is_public ? `${siteUrl()}/u/${device.handle}` : undefined,
+    shareUrl: device.is_public ? `${siteUrl()}/u/${device.handle}?share=1&reason=sync#share` : undefined,
     privacySettingsUrl: `${siteUrl()}/settings/privacy`,
   });
 }

@@ -125,7 +125,7 @@ program.command("status").description("Show local coverage and public profile st
 program.command("card").description("Open your latest public share card").action(async () => {
   const config = await readConfig();
   if (!config.handle) throw new Error("Connect this device first.");
-  openExternal(`${config.serverUrl}/u/${encodeURIComponent(config.handle)}#share`);
+  openExternal(`${config.serverUrl}/u/${encodeURIComponent(config.handle)}?share=1#share`);
 });
 
 const autoSync = program.command("auto-sync");
@@ -167,10 +167,11 @@ async function sync(dryRun: boolean) {
     body: JSON.stringify(payload),
   });
   if (!response.ok) throw new Error(`Sync failed (${response.status}): ${await response.text()}`);
-  const result = (await response.json()) as { accepted: number; quarantined: number; visibility?: "public" | "private"; profileUrl?: string; privacySettingsUrl?: string };
+  const result = (await response.json()) as { accepted: number; quarantined: number; visibility?: "public" | "private"; profileUrl?: string; shareUrl?: string; privacySettingsUrl?: string };
   await writeConfig({ ...config, lastSyncedAt: new Date().toISOString() });
   console.log(`Synced ${result.accepted} buckets${result.quarantined ? ` · ${result.quarantined} quarantined` : ""}.`);
   if (result.profileUrl) console.log(result.profileUrl);
+  if (result.shareUrl) console.log(`Share your latest update: ${result.shareUrl}`);
   if (result.visibility === "private" && result.privacySettingsUrl) {
     console.log(`Your profile is private. Enable Public profile and Rank and percentile to appear on the leaderboard:\n${result.privacySettingsUrl}`);
   }

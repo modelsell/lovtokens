@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <pattern id="grid" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M42 0H0V42" fill="none" stroke="#c8f06a" stroke-opacity=".14"/></pattern>
+    <radialGradient id="glow" cx="80%" cy="20%" r="70%"><stop stop-color="#c8f06a" stop-opacity=".2"/><stop offset="1" stop-color="#c8f06a" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#090c0a"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <text x="72" y="108" fill="#f6f7f3" font-family="Arial, sans-serif" font-size="48" font-weight="900" letter-spacing="-2">LovTokens<tspan fill="#c8f06a">/</tspan></text>
+  <text x="72" y="265" fill="#f6f7f3" font-family="Arial, sans-serif" font-size="76" font-weight="900" letter-spacing="-4">YOUR AI TOKEN</text>
+  <text x="72" y="348" fill="#c8f06a" font-family="Arial, sans-serif" font-size="76" font-weight="900" letter-spacing="-4">PORTFOLIO.</text>
+  <text x="72" y="438" fill="#a2aaa3" font-family="Arial, sans-serif" font-size="25">Count it. Rank it. Share it.</text>
+  <line x1="72" x2="1128" y1="526" y2="526" stroke="#c8f06a"/>
+  <text x="72" y="568" fill="#788079" font-family="Arial, sans-serif" font-size="18" letter-spacing="2">CODEX · CLAUDE CODE · WORKBUDDY</text>
+  <text x="1128" y="568" fill="#f6f7f3" font-family="Arial, sans-serif" font-size="18" text-anchor="end">lovtokens.com</text>
+</svg>

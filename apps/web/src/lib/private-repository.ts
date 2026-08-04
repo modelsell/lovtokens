@@ -18,6 +18,18 @@ export async function getDevices(userId: string) { const db = await getD1(); if 
 export async function getCertificatesForUser(userId: string) { const db = await getD1(); if (!db) return []; const r = await db.prepare("SELECT id,kind,period,processed_tokens,rank,percentile,coverage,trust_level,status,issued_at FROM certificates WHERE user_id=?1 ORDER BY issued_at DESC").bind(userId).all<Record<string, unknown>>(); return r.results; }
 export async function getAchievementsForUser(userId: string) { const db = await getD1(); if (!db) return []; const r = await db.prepare("SELECT achievement_key,earned_at,metadata_json FROM achievements WHERE user_id=?1 ORDER BY earned_at").bind(userId).all<Record<string, unknown>>(); return r.results; }
 
+export async function getSharePerformance(userId: string) {
+  const db = await getD1();
+  if (!db) return { intents: 0, landings: 0, ctaClicks: 0, signups: 0 };
+  const row = await db.prepare(`SELECT
+    COALESCE(SUM(CASE WHEN event='target_click' THEN event_count ELSE 0 END),0) intents,
+    COALESCE(SUM(CASE WHEN event='landing' THEN event_count ELSE 0 END),0) landings,
+    COALESCE(SUM(CASE WHEN event='cta_click' THEN event_count ELSE 0 END),0) cta_clicks,
+    COALESCE(SUM(CASE WHEN event='signup' THEN event_count ELSE 0 END),0) signups
+    FROM share_events_daily WHERE user_id=?1 AND utc_date>=date('now','-29 days')`).bind(userId).first<Record<string, unknown>>();
+  return { intents: Number(row?.intents || 0), landings: Number(row?.landings || 0), ctaClicks: Number(row?.cta_clicks || 0), signups: Number(row?.signups || 0) };
+}
+
 export async function getAchievementMetrics(userId: string) {
   const db = await getD1();
   if (!db) return null;

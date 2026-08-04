@@ -4,6 +4,7 @@ import { formatTokenCount } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
 import { localePath } from "@/lib/i18n";
 import { LocaleLink } from "./locale-link";
+import { CertificateShareButton } from "./certificate-share-button";
 
 export type AchievementBadgeData = {
   key: string;
@@ -22,7 +23,7 @@ export type AchievementBadgeData = {
   issuedAt?: number;
 };
 
-export function AchievementBadge({ achievement, locale }: { achievement: AchievementBadgeData; locale: Locale }) {
+export function AchievementBadge({ achievement, locale, siteOrigin }: { achievement: AchievementBadgeData; locale: Locale; siteOrigin: string }) {
   const progress = Math.min(100, Math.max(0, (achievement.tokens / Math.max(1, achievement.target)) * 100));
   const issued = achievement.issuedAt ? new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", { day: "numeric", month: "short", year: "numeric" }).format(new Date(achievement.issuedAt * 1000)) : null;
   const proofHref = achievement.certificateId ? localePath(`/certificate/${encodeURIComponent(achievement.certificateId)}`, locale) : null;
@@ -54,6 +55,7 @@ export function AchievementBadge({ achievement, locale }: { achievement: Achieve
       <LocaleLink href={proofHref} locale={locale}>{locale === "zh" ? "查看证明" : "View proof"}<ArrowUpRight aria-hidden="true" size={13} /></LocaleLink>
       <a download href={`${imageBase}&style=collector&download=1`}>{locale === "zh" ? "金属卡" : "Metal card"}<Download aria-hidden="true" size={13} /></a>
       <a download href={`${imageBase}&style=archive&download=1`}>{locale === "zh" ? "档案卡" : "Archive card"}<Download aria-hidden="true" size={13} /></a>
+      <CertificateShareButton canPublishPreview compact id={achievement.certificateId!} locale={locale} processedTokens={achievement.target} siteOrigin={siteOrigin} title={achievement.title} />
     </footer>}
   </article>;
 }
