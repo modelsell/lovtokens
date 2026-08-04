@@ -1,4 +1,5 @@
 import { signPayload } from "./crypto";
+import { achievementProgress, queryAchievementMetrics } from "./achievement-metrics";
 import { getD1, getRuntimeEnv } from "./runtime";
 
 export const MILESTONE_THRESHOLDS = [1_000_000, 10_000_000, 100_000_000, 1_000_000_000, 10_000_000_000] as const;
@@ -10,6 +11,17 @@ export async function issueEligibleCertificates(userId: string) {
   const current = new Date(); const previousEnd = new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth(), 0)); const period = previousEnd.toISOString().slice(0, 7); const start = `${period}-01`; const next = new Date(Date.UTC(previousEnd.getUTCFullYear(), previousEnd.getUTCMonth() + 1, 1)).toISOString().slice(0, 10);
   const monthly = await db.prepare("SELECT COALESCE(SUM(input_tokens_total+output_tokens_total),0) total,AVG(CASE WHEN coverage='complete' THEN 100.0 ELSE 75.0 END) coverage,MIN(trust_level) trust_level FROM usage_daily WHERE user_id=?1 AND utc_date>=?2 AND utc_date<?3 AND quarantined=0").bind(userId, start, next).first<Record<string, unknown>>();
   if (Number(monthly?.total || 0) > 0) { const monthlyRank = await rankForRange(db, userId, start, next); await issue(db, { userId, kind: "monthly", period, processedTokens: Number(monthly?.total), coverage: Number(monthly?.coverage || 0), trustLevel: String(monthly?.trust_level || "collector-checked"), displayName: String(stats.display_name), handle: String(stats.handle), issuedAt: now, ...monthlyRank }, env.CERTIFICATE_PRIVATE_JWK); }
+  await issueEligibleAchievements(db, userId, now);
+}
+
+async function issueEligibleAchievements(db: D1Database, userId: string, earnedAt: number) {
+  const progress = achievementProgress(await queryAchievementMetrics(db, userId));
+  const existing = await db.prepare("SELECT achievement_key FROM achievements WHERE user_id=?1").bind(userId).all<{ achievement_key: string }>();
+  const earned = new Set(existing.results.map((row) => row.achievement_key));
+  const eligible = Object.entries(progress).filter(([key, value]) => value.value >= value.target && !earned.has(key));
+  if (!eligible.length) return;
+  await db.batch(eligible.map(([key, value]) => db.prepare("INSERT OR IGNORE INTO achievements (id,user_id,achievement_key,earned_at,metadata_json) VALUES (?1,?2,?3,?4,?5)")
+    .bind(crypto.randomUUID(), userId, key, earnedAt, JSON.stringify({ ruleVersion: 1, value: value.value, target: value.target }))));
 }
 
 type CertificatePayload = { userId: string; kind: string; period: string; processedTokens: number; coverage: number; trustLevel: string; displayName: string; handle: string; issuedAt: number; rank: number | null; percentile: number | null };

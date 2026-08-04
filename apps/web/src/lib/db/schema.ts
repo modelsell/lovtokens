@@ -149,4 +149,14 @@ export const certificates = sqliteTable("certificates", {
   revokedAt: integer("revoked_at", { mode: "timestamp" }),
 });
 
+export const achievements = sqliteTable("achievements", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  achievementKey: text("achievement_key").notNull(),
+  earnedAt: integer("earned_at", { mode: "timestamp" }).notNull(),
+  metadataJson: text("metadata_json"),
+}, (table) => [
+  uniqueIndex("achievements_user_key_unique").on(table.userId, table.achievementKey),
+]);
+
 export const authSchema = { user, session, account, verification };

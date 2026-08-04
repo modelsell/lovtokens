@@ -30,7 +30,8 @@ export function AchievementBadge({ achievement, locale }: { achievement: Achieve
 
   return <article className="achievement-badge-card" data-art={achievement.image ? true : undefined} data-locked={!achievement.unlocked || undefined} data-tier={achievement.tier}>
     <div className="achievement-badge-visual">
-      {achievement.image ? <Image alt="" className="achievement-badge-art" height={640} src={achievement.image} width={640} /> : <><div aria-hidden="true" className="achievement-badge-rays" /><div className="achievement-badge-medal">
+      <span aria-hidden="true" className="achievement-badge-mark">{achievement.mark}</span>
+      {achievement.image ? <Image alt={achievement.title} className="achievement-badge-art" height={640} sizes="(max-width: 720px) 84vw, (max-width: 1100px) 42vw, 25vw" src={achievement.image} width={640} /> : <><div aria-hidden="true" className="achievement-badge-rays" /><div className="achievement-badge-medal">
         <span className="achievement-badge-series">LOVTOKENS</span>
         <strong>{achievement.mark}</strong>
         <b>{achievement.targetLabel || formatTokenCount(achievement.target)}</b>
@@ -39,7 +40,10 @@ export function AchievementBadge({ achievement, locale }: { achievement: Achieve
       <span className="achievement-badge-status">{achievement.unlocked ? <Check aria-hidden="true" size={15} /> : <LockKeyhole aria-hidden="true" size={15} />}</span>
     </div>
     <div className="achievement-badge-copy">
-      <span>{achievement.unlocked ? (locale === "zh" ? "已解锁" : "Unlocked") : (locale === "zh" ? "尚未解锁" : "Locked")}</span>
+      <div className="achievement-badge-meta">
+        <span>{achievement.unlocked ? (locale === "zh" ? "已解锁" : "Unlocked") : (locale === "zh" ? "尚未解锁" : "Locked")}</span>
+        <b>{achievement.targetLabel || formatTokenCount(achievement.target)}</b>
+      </div>
       <h2>{achievement.title}</h2>
       <p>{achievement.description}</p>
       {achievement.unlocked

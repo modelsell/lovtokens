@@ -36,11 +36,11 @@ describe("AchievementBadge", () => {
   });
 
   it("renders generated artwork as a grayscale collection slot before unlock", () => {
-    const { container } = render(<AchievementBadge achievement={{ ...badge, image: "/achievements/night-owl.jpg", tier: "special", title: "夜猫子" }} locale="zh" />);
+    const { container } = render(<AchievementBadge achievement={{ ...badge, image: "/achievements/night-owl.png", tier: "special", title: "夜猫子" }} locale="zh" />);
 
     expect(container.querySelector('[data-art="true"][data-locked="true"]')).toBeInTheDocument();
-    expect(container.querySelector('img[src*="night-owl.jpg"]')).toBeInTheDocument();
-    expect(screen.getByText("夜猫子")).toBeInTheDocument();
+    expect(container.querySelector('img[src*="night-owl.png"]')).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "夜猫子" })).toBeInTheDocument();
   });
 
   it("shows custom non-token progress labels for activity badges", () => {

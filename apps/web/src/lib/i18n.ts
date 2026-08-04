@@ -270,7 +270,7 @@ const zh: Record<string, string> = {
   "never": "从未",
   "Revoke": "撤销",
   "Export all aggregate data": "导出全部汇总数据",
-  "Download profile settings, devices, daily usage and certificates as JSON.": "将个人资料设置、设备、每日使用量和证书下载为 JSON。",
+  "Download profile settings, devices, daily usage, achievements and certificates as JSON.": "将个人资料设置、设备、每日使用量、成就和证书下载为 JSON。",
   "Download": "下载",
   "Delete account": "删除账号",
   "Revokes certificates, removes identity, usage, devices and login records. Type DELETE to confirm.": "撤销证书，并移除身份、使用量、设备和登录记录。输入 DELETE 进行确认。",
