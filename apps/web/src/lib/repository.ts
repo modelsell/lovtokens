@@ -15,10 +15,10 @@ export async function getLeaderboard(period = "month", source = "all", limit = 1
   const db = await getD1();
   if (!db) return [];
   try {
-  const snapshot = await db.prepare(`SELECT ls.rank,p.handle,p.display_name,p.avatar_url,p.is_anonymous,p.show_exact_tokens,p.show_avatar,ls.processed_tokens,ls.active_days,ls.percentile,ls.codex_tokens,ls.claude_tokens,ls.workbuddy_tokens,'collector-checked' trust_level,ls.generated_at FROM leaderboard_snapshots ls JOIN profiles p ON p.user_id=ls.user_id WHERE ls.period=?1 AND ls.source=?2 AND p.is_public=1 AND p.show_rank=1 ORDER BY ls.rank LIMIT ?3`).bind(period, source, limit).all<Record<string, unknown>>();
+  const snapshot = await db.prepare(`SELECT ls.rank,p.handle,p.display_name,p.avatar_url,p.is_anonymous,p.show_exact_tokens,p.show_avatar,ls.processed_tokens,ls.active_days,ls.percentile,ls.codex_tokens,ls.claude_tokens,ls.workbuddy_tokens,(SELECT COUNT(*) FROM achievements a WHERE a.user_id=ls.user_id)+(SELECT COUNT(*) FROM certificates c WHERE c.user_id=ls.user_id AND c.status='active') achievement_count,'collector-checked' trust_level,ls.generated_at FROM leaderboard_snapshots ls JOIN profiles p ON p.user_id=ls.user_id WHERE ls.period=?1 AND ls.source=?2 AND p.is_public=1 AND p.show_rank=1 ORDER BY ls.rank LIMIT ?3`).bind(period, source, limit).all<Record<string, unknown>>();
   const latestVisibleProfile = await db.prepare("SELECT MAX(updated_at) updated_at FROM profiles WHERE is_public=1 AND show_rank=1").first<{ updated_at: number | null }>();
   const snapshotGeneratedAt = Number(snapshot.results[0]?.generated_at || 0);
-  if (snapshot.results.length && snapshotGeneratedAt >= Number(latestVisibleProfile?.updated_at || 0)) return snapshot.results.map((row) => ({ rank: Number(row.rank), handle: String(row.handle), displayName: Boolean(row.is_anonymous) ? `Anonymous · ${String(row.handle).slice(-4).toUpperCase()}` : String(row.display_name), avatarUrl: row.avatar_url ? String(row.avatar_url) : null, isAnonymous: Boolean(row.is_anonymous), processedTokens: Number(row.processed_tokens), activeDays: Number(row.active_days), percentile: Number(row.percentile), codexTokens: Number(row.codex_tokens), claudeTokens: Number(row.claude_tokens), workbuddyTokens: Number(row.workbuddy_tokens), trustLevel: String(row.trust_level), showExactTokens: Boolean(row.show_exact_tokens), showAvatar: Boolean(row.show_avatar) }));
+  if (snapshot.results.length && snapshotGeneratedAt >= Number(latestVisibleProfile?.updated_at || 0)) return snapshot.results.map((row) => ({ rank: Number(row.rank), handle: String(row.handle), displayName: Boolean(row.is_anonymous) ? `Anonymous · ${String(row.handle).slice(-4).toUpperCase()}` : String(row.display_name), avatarUrl: row.avatar_url ? String(row.avatar_url) : null, isAnonymous: Boolean(row.is_anonymous), processedTokens: Number(row.processed_tokens), activeDays: Number(row.active_days), percentile: Number(row.percentile), codexTokens: Number(row.codex_tokens), claudeTokens: Number(row.claude_tokens), workbuddyTokens: Number(row.workbuddy_tokens), achievementCount: Number(row.achievement_count), trustLevel: String(row.trust_level), showExactTokens: Boolean(row.show_exact_tokens), showAvatar: Boolean(row.show_avatar) }));
   const sourceFilter = source === "all" ? "" : "AND ud.source = ?3";
   const query = `
     WITH totals AS (
@@ -35,7 +35,9 @@ export async function getLeaderboard(period = "month", source = "all", limit = 1
       GROUP BY ud.user_id
     )
     SELECT p.handle, p.display_name, p.avatar_url, p.is_anonymous, p.show_exact_tokens, p.show_avatar,
-      t.processed_tokens, t.active_days, t.codex_tokens, t.claude_tokens, t.workbuddy_tokens, t.trust_level
+      t.processed_tokens, t.active_days, t.codex_tokens, t.claude_tokens, t.workbuddy_tokens,
+      (SELECT COUNT(*) FROM achievements a WHERE a.user_id=t.user_id)+(SELECT COUNT(*) FROM certificates c WHERE c.user_id=t.user_id AND c.status='active') achievement_count,
+      t.trust_level
     FROM totals t JOIN profiles p ON p.user_id = t.user_id
     ORDER BY t.processed_tokens DESC, t.active_days DESC, p.created_at ASC LIMIT ?2`;
   const statement = db.prepare(query);
@@ -54,6 +56,7 @@ export async function getLeaderboard(period = "month", source = "all", limit = 1
     codexTokens: Number(row.codex_tokens),
     claudeTokens: Number(row.claude_tokens),
     workbuddyTokens: Number(row.workbuddy_tokens),
+    achievementCount: Number(row.achievement_count),
     trustLevel: String(row.trust_level),
     showExactTokens: Boolean(row.show_exact_tokens),
     showAvatar: Boolean(row.show_avatar),
@@ -141,6 +144,7 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
     codexTokens: Number(profile.codex_tokens),
     claudeTokens: Number(profile.claude_tokens),
     workbuddyTokens: Number(profile.workbuddy_tokens),
+    achievementCount: achievements.length,
     trustLevel: String(profile.trust_level),
     showExactTokens,
     showAvatar: Boolean(profile.show_avatar),

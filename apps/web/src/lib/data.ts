@@ -10,6 +10,7 @@ export type LeaderboardEntry = {
   codexTokens: number;
   claudeTokens: number;
   workbuddyTokens: number;
+  achievementCount: number;
   trustLevel: string;
   showExactTokens: boolean;
   showAvatar: boolean;
