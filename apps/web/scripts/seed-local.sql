@@ -59,7 +59,7 @@ WITH RECURSIVE numbers(n) AS (
   SELECT n + 1 FROM numbers WHERE n < 30
 )
 INSERT INTO profiles (
-  user_id, handle, display_name, avatar_url, is_public, is_anonymous,
+  user_id, handle, display_name, statement, avatar_url, is_public, is_anonymous,
   show_exact_tokens, show_rank, show_avatar, show_models, show_cost,
   privacy_version, stats_version, created_at, updated_at
 )
@@ -78,6 +78,18 @@ SELECT
     WHEN 9 THEN 'Bug 牧人'
     WHEN 10 THEN '隐私观察员'
     ELSE printf('测试用户 %02d', n)
+  END,
+  CASE n
+    WHEN 1 THEN '工具替我计算，判断仍然属于我。'
+    WHEN 2 THEN '慢一点没关系，别停止把想法变成真的。'
+    WHEN 3 THEN '能复用的上下文，才是被认真对待过的上下文。'
+    WHEN 4 THEN '夜深之后，噪音变少，真正的问题才开始说话。'
+    WHEN 5 THEN '模型会更新，好奇心不要过期。'
+    WHEN 6 THEN '提示词不是咒语，是把模糊愿望说清楚的练习。'
+    WHEN 7 THEN '作品可以被看见，身份不必被消费。'
+    WHEN 8 THEN '终端很安静，所以每一次输出都算数。'
+    WHEN 9 THEN '我不消灭 Bug，我只是让它们无处藏身。'
+    ELSE ''
   END,
   NULL,
   CASE WHEN n % 10 = 0 THEN 0 ELSE 1 END,

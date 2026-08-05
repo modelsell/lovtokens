@@ -505,6 +505,16 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .profile-avatar { align-items: center; background: var(--acid); border-radius: 50%; color: var(--acid-ink); display: flex; font-size: 32px; font-weight: 900; height: 88px; justify-content: center; overflow: hidden; position: relative; width: 88px; }
 .profile-id h1 { font-size: 44px; letter-spacing: -.055em; margin: 0 0 5px; }
 .profile-id p { color: var(--muted); margin: 0; }
+.profile-statement { align-items: start; background: linear-gradient(125deg, var(--surface-subtle), color-mix(in srgb, var(--paper) 78%, var(--acid))); border: 1px solid var(--line); display: grid; gap: 18px; grid-template-columns: auto minmax(0, 1fr) auto; margin-top: 30px; min-height: 138px; overflow: hidden; padding: 25px 28px; position: relative; }
+.profile-statement::after { background: var(--acid); content: ""; height: 110px; opacity: .7; position: absolute; right: -52px; top: -55px; transform: rotate(45deg); width: 110px; }
+.profile-statement-mark { color: var(--acid-dark); margin-top: 2px; }
+.profile-statement > div { min-width: 0; position: relative; z-index: 1; }
+.profile-statement > div > span { color: var(--muted); display: block; font-size: 9px; font-weight: 900; letter-spacing: .17em; margin-bottom: 11px; text-transform: uppercase; }
+.profile-statement blockquote { font-family: Georgia, "Times New Roman", serif; font-size: clamp(22px, 2.8vw, 38px); font-style: italic; letter-spacing: -.035em; line-height: 1.18; margin: 0; max-width: 860px; overflow-wrap: anywhere; white-space: pre-wrap; }
+.profile-statement > div > p { color: var(--muted); font-size: 14px; margin: 0; }
+.profile-statement > a { align-items: center; border-bottom: 1px solid currentColor; color: var(--muted); display: flex; font-size: 10px; font-weight: 850; gap: 7px; margin-right: 18px; padding-bottom: 3px; position: relative; text-transform: uppercase; z-index: 1; }
+.profile-statement > a:hover { color: var(--ink); }
+.profile-statement[data-empty] { min-height: 100px; }
 .verified-pill { align-items: center; background: #e3e8ff; color: #405bce; display: inline-flex; font-size: 9px; font-weight: 800; gap: 5px; margin-top: 9px; padding: 7px 9px; text-transform: uppercase; }
 .profile-share-button { align-items: center; background: var(--solid-bg); border: 0; color: var(--solid-fg); cursor: pointer; display: flex; flex: 0 0 auto; font-size: 11px; font-weight: 900; gap: 9px; justify-content: center; min-height: 46px; padding: 0 17px; text-transform: uppercase; }
 .profile-share-button:hover { background: var(--acid); color: var(--acid-ink); }
@@ -856,6 +866,10 @@ a.profile-achievement-item:hover, .profile-achievement-item:target { background:
 .settings-grid { display: grid; gap: 14px; }
 .setting-row { align-items: center; background: var(--paper); border: 1px solid var(--line); display: flex; justify-content: space-between; padding: 20px; }
 .setting-row small { color: var(--muted); display: block; margin-top: 5px; }
+.setting-row-long { align-items: flex-start; }
+.setting-textarea { display: grid; justify-items: end; max-width: 460px; width: min(100%, 460px); }
+.setting-textarea textarea { font: inherit; line-height: 1.55; max-width: none; resize: vertical; width: 100%; }
+.setting-textarea > small { font-variant-numeric: tabular-nums; margin-top: 7px; }
 .primary-button, .secondary-button, .danger-button { align-items: center; border: 0; cursor: pointer; display: inline-flex; font-size: 12px; font-weight: 850; gap: 8px; justify-content: center; padding: 13px 18px; text-transform: uppercase; }
 .primary-button { background: var(--solid-bg); color: var(--solid-fg); }
 .secondary-button { background: var(--surface-subtle); }
@@ -979,6 +993,8 @@ a.profile-achievement-item:hover, .profile-achievement-item:target { background:
   .profile-avatar { height: 65px; width: 65px; }
   .profile-hero { padding-top: 42px; }
   .profile-identity-row { align-items: flex-start; flex-direction: column; }
+  .profile-statement { grid-template-columns: auto minmax(0, 1fr); padding: 22px 20px; }
+  .profile-statement > a { grid-column: 2; justify-self: start; margin-right: 0; }
   .profile-achievements { padding: 24px 18px; }
   .profile-achievements-head { align-items: start; flex-direction: column; gap: 14px; }
   .profile-achievement-grid { grid-template-columns: 1fr; }
@@ -1003,6 +1019,8 @@ a.profile-achievement-item:hover, .profile-achievement-item:target { background:
   .profile-stats div { border-left: 1px solid #2d342e; border-top: 1px solid #2d342e; padding: 17px 10px; }
   .profile-stats small { font-size: 8px; letter-spacing: .08em; }
   .profile-stats strong { font-size: 18px; }
+  .setting-row, .setting-row-long { align-items: stretch; flex-direction: column; gap: 15px; }
+  .setting-row .text-input, .setting-textarea { max-width: none; width: 100%; }
   .profile-rank-cta { gap: 18px; grid-template-columns: auto minmax(0, 1fr); padding: 28px 24px; }
   .profile-rank-cta-icon { height: 58px; width: 58px; }
   .profile-rank-cta-copy strong { font-size: 27px; }

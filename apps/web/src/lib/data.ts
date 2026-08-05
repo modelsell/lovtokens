@@ -17,6 +17,7 @@ export type LeaderboardEntry = {
 };
 
 export type PublicProfile = LeaderboardEntry & {
+  statement: string;
   inputTokens: number;
   cacheTokens: number;
   outputTokens: number;

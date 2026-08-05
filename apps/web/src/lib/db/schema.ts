@@ -50,6 +50,7 @@ export const profiles = sqliteTable("profiles", {
   userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
   handle: text("handle").notNull().unique(),
   displayName: text("display_name").notNull(),
+  statement: text("statement").notNull().default(""),
   avatarUrl: text("avatar_url"),
   isPublic: integer("is_public", { mode: "boolean" }).notNull().default(false),
   isAnonymous: integer("is_anonymous", { mode: "boolean" }).notNull().default(false),

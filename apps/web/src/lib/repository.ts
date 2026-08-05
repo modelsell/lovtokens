@@ -136,6 +136,7 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
     rank: found?.rank ?? 0,
     handle: String(profile.handle),
     displayName: Boolean(profile.is_anonymous) ? `Anonymous · ${String(profile.handle).slice(-4).toUpperCase()}` : String(profile.display_name),
+    statement: String(profile.statement || ""),
     avatarUrl: profile.avatar_url ? String(profile.avatar_url) : null,
     isAnonymous: Boolean(profile.is_anonymous),
     processedTokens: Number(profile.processed_tokens),

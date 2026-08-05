@@ -465,6 +465,9 @@ const zh: Record<string, string> = {
   "There is nothing public here.": "这里没有可公开显示的内容。",
   "The profile may be private, empty, or removed. LovTokens never creates placeholder people to fill the board.": "该档案可能是私密的、暂无数据或已被删除。LovTokens 不会创建占位用户来填充榜单。",
   "Return to leaderboard": "返回排行榜",
+  "Make the page sound like you, not just your numbers.": "让主页表达你自己，而不只是展示数字。",
+  "Builder statement": "个人宣言",
+  "Add a short opinion, motto, or belief to the top of your public profile.": "在公开主页顶部写下一句你的观点、格言或信念。",
 };
 
 const dictionaries: Partial<Record<Locale, Record<string, string>>> = { zh, "zh-tw": zhTw, ja, ko, es, fr, de, "pt-br": ptBr, ru };
