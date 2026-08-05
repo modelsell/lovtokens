@@ -4,7 +4,7 @@ import {
   type Coverage,
   type RawTokenUsage,
   type TokenSource,
-  type UsageBucketV1,
+  type UsageBucketV2,
   utcDate,
 } from "@lovtokens/token-schema";
 
@@ -20,18 +20,21 @@ export function fingerprint(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
-export function aggregateEvents(events: UsageEvent[], coverage: Coverage): UsageBucketV1[] {
-  const grouped = new Map<string, UsageBucketV1>();
+export function aggregateEvents(events: UsageEvent[], coverage: Coverage): UsageBucketV2[] {
+  const grouped = new Map<string, UsageBucketV2>();
   for (const event of events) {
     const normalized = normalizeTokenUsage(event.raw);
-    const date = utcDate(event.timestamp);
-    const key = [event.source, date, event.model, event.sessionFingerprint].join(":");
+    const eventAt = new Date(event.timestamp).toISOString();
+    const date = utcDate(eventAt);
+    const hour = new Date(eventAt).getUTCHours();
+    const key = [event.source, date, hour, event.model, event.sessionFingerprint].join(":");
     const existing = grouped.get(key);
     if (!existing) {
       grouped.set(key, {
-        schemaVersion: 1,
+        schemaVersion: 2,
         source: event.source,
         utcDate: date,
+        utcHour: hour,
         model: event.model,
         sessionFingerprint: event.sessionFingerprint,
         inputTokensTotal: normalized.inputTokensTotal,
@@ -41,9 +44,9 @@ export function aggregateEvents(events: UsageEvent[], coverage: Coverage): Usage
         outputTokensTotal: normalized.outputTokensTotal,
         reasoningOutputTokens: normalized.reasoningOutputTokens,
         requestCount: 1,
-        firstEventAt: new Date(event.timestamp).toISOString(),
-        lastEventAt: new Date(event.timestamp).toISOString(),
-        parserVersion: "0.1.0",
+        firstEventAt: eventAt,
+        lastEventAt: eventAt,
+        parserVersion: "0.2.0",
         coverage,
       });
       continue;
@@ -55,10 +58,10 @@ export function aggregateEvents(events: UsageEvent[], coverage: Coverage): Usage
     existing.outputTokensTotal += normalized.outputTokensTotal;
     existing.reasoningOutputTokens += normalized.reasoningOutputTokens;
     existing.requestCount += 1;
-    if (event.timestamp < existing.firstEventAt) existing.firstEventAt = new Date(event.timestamp).toISOString();
-    if (event.timestamp > existing.lastEventAt) existing.lastEventAt = new Date(event.timestamp).toISOString();
+    if (eventAt < existing.firstEventAt) existing.firstEventAt = eventAt;
+    if (eventAt > existing.lastEventAt) existing.lastEventAt = eventAt;
   }
   return [...grouped.values()].sort((a, b) =>
-    `${a.utcDate}:${a.source}:${a.model}`.localeCompare(`${b.utcDate}:${b.source}:${b.model}`),
+    `${a.utcDate}:${String(a.utcHour).padStart(2, "0")}:${a.source}:${a.model}`.localeCompare(`${b.utcDate}:${String(b.utcHour).padStart(2, "0")}:${b.source}:${b.model}`),
   );
 }

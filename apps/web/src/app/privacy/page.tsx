@@ -27,8 +27,8 @@ function makePayload(
   deviceId: string,
   buckets: Awaited<ReturnType<typeof scanAll>>["buckets"],
 ) {
-  return syncPayloadV1Schema.parse({
-    schemaVersion: 1,
+  return syncPayloadV2Schema.parse({
+    schemaVersion: 2,
     collectorVersion,
     deviceId,
     generatedAt: new Date().toISOString(),
@@ -36,10 +36,11 @@ function makePayload(
   });
 }`;
 
-const uploadSchemaSource = `export const usageBucketV1Schema = z.object({
+const uploadSchemaSource = `export const usageBucketV2Schema = z.object({
   schemaVersion: z.literal(TOKEN_SCHEMA_VERSION),
   source: tokenSourceSchema,
   utcDate: z.iso.date(),
+  utcHour: z.number().int().min(0).max(23),
   model: z.string().trim().min(1).max(120),
   sessionFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
   inputTokensTotal: safeTokenCount,
@@ -55,12 +56,12 @@ const uploadSchemaSource = `export const usageBucketV1Schema = z.object({
   coverage: coverageSchema,
 }).strict(); // Cross-field consistency checks follow in source.
 
-export const syncPayloadV1Schema = z.object({
+export const syncPayloadV2Schema = z.object({
   schemaVersion: z.literal(TOKEN_SCHEMA_VERSION),
   collectorVersion: z.string().min(1).max(40),
   deviceId: z.string().uuid(),
   generatedAt: z.iso.datetime({ offset: true }),
-  buckets: z.array(usageBucketV1Schema).max(5_000),
+  buckets: z.array(usageBucketV2Schema).max(20_000),
 }).strict();`;
 
 export default async function PrivacyPage() {
@@ -75,7 +76,7 @@ export default async function PrivacyPage() {
       <h2>{t(locale, "Known directories only")}</h2>
       <p>{locale === "zh" ? <>采集器只读取 <code>$CODEX_HOME/sessions</code> 和 <code>archived_sessions</code> 下的 Codex 会话、已知配置目录中的 Claude Code 项目日志，以及 <code>$WORKBUDDY_HOME/projects</code> 下的 WorkBuddy 会话。它不会递归搜索主目录，也不会跟随指向这些根目录之外的符号链接。</> : <>The collector reads Codex sessions under <code>$CODEX_HOME/sessions</code> and <code>archived_sessions</code>, Claude Code project logs under known configuration directories, and WorkBuddy sessions under <code>$WORKBUDDY_HOME/projects</code>. It does not recursively search the home directory and does not follow symlinks outside those roots.</>}</p>
       <h2>{t(locale, "Uploaded fields")}</h2>
-      <p>{locale === "zh" ? "数据源、UTC 日期、模型、单向会话指纹、Token 组成、请求数、首次/末次事件时间戳、解析器版本和覆盖率。设备认证与使用量数据相互独立。" : "Source, UTC date, model, a one-way session fingerprint, token components, request count, first/last event timestamps, parser version, and coverage. Device authentication is separate from usage."}</p>
+      <p>{locale === "zh" ? "数据源、UTC 日期与小时、模型、单向会话指纹、Token 组成、请求数、首次/末次事件时间戳、解析器版本和覆盖率。设备认证与使用量数据相互独立。" : "Source, UTC date and hour, model, a one-way session fingerprint, token components, request count, first/last event timestamps, parser version, and coverage. Device authentication is separate from usage."}</p>
       <h2 id="inspect-upload">{t(locale, "Inspect before upload")}</h2>
       <pre><code>npx lovtokens@latest show-data</code></pre>
       <p>{t(locale, "This prints the complete JSON payload. It contains schema version, collector version, a random device ID, timestamps, and aggregate usage buckets.")}</p>

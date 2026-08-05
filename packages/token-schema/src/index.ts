@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const TOKEN_SCHEMA_VERSION = 1 as const;
+export const TOKEN_SCHEMA_VERSION = 2 as const;
 export const ACCOUNTING_VERSION = "2026-08-v1";
 
 export const tokenSourceSchema = z.enum(["codex", "claude-code", "workbuddy"]);
@@ -17,9 +17,7 @@ const safeTokenCount = z
   .min(0)
   .max(Number.MAX_SAFE_INTEGER);
 
-export const usageBucketV1Schema = z
-  .object({
-    schemaVersion: z.literal(TOKEN_SCHEMA_VERSION),
+const usageBucketFields = {
     source: tokenSourceSchema,
     utcDate: z.iso.date(),
     model: z.string().trim().min(1).max(120),
@@ -35,9 +33,18 @@ export const usageBucketV1Schema = z
     lastEventAt: z.iso.datetime({ offset: true }),
     parserVersion: z.string().trim().min(1).max(40),
     coverage: coverageSchema,
-  })
-  .strict()
-  .superRefine((value, context) => {
+};
+
+function validateUsageBucket(value: {
+  inputTokensTotal: number;
+  freshInputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  outputTokensTotal: number;
+  reasoningOutputTokens: number;
+  firstEventAt: string;
+  lastEventAt: string;
+}, context: z.RefinementCtx) {
     if (
       value.freshInputTokens + value.cacheReadTokens + value.cacheWriteTokens !==
       value.inputTokensTotal
@@ -62,21 +69,64 @@ export const usageBucketV1Schema = z
         message: "firstEventAt cannot follow lastEventAt",
       });
     }
+}
+
+export const usageBucketV1Schema = z
+  .object({
+    schemaVersion: z.literal(1),
+    ...usageBucketFields,
+  })
+  .strict()
+  .superRefine(validateUsageBucket);
+
+export const usageBucketV2Schema = z
+  .object({
+    schemaVersion: z.literal(TOKEN_SCHEMA_VERSION),
+    utcHour: z.number().int().min(0).max(23),
+    ...usageBucketFields,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    validateUsageBucket(value, context);
+    const first = new Date(value.firstEventAt);
+    const last = new Date(value.lastEventAt);
+    if (first.toISOString().slice(0, 10) !== value.utcDate || first.getUTCHours() !== value.utcHour || last.toISOString().slice(0, 10) !== value.utcDate || last.getUTCHours() !== value.utcHour) {
+      context.addIssue({
+        code: "custom",
+        path: ["utcHour"],
+        message: "utcHour must contain the complete event range",
+      });
+    }
   });
 
 export const syncPayloadV1Schema = z.object({
-  schemaVersion: z.literal(TOKEN_SCHEMA_VERSION),
+  schemaVersion: z.literal(1),
   collectorVersion: z.string().min(1).max(40),
   deviceId: z.string().uuid(),
   generatedAt: z.iso.datetime({ offset: true }),
   buckets: z.array(usageBucketV1Schema).max(5_000),
 }).strict();
 
+export const syncPayloadV2Schema = z.object({
+  schemaVersion: z.literal(TOKEN_SCHEMA_VERSION),
+  collectorVersion: z.string().min(1).max(40),
+  deviceId: z.string().uuid(),
+  generatedAt: z.iso.datetime({ offset: true }),
+  buckets: z.array(usageBucketV2Schema).max(20_000),
+}).strict();
+
+export const syncPayloadSchema = z.discriminatedUnion("schemaVersion", [
+  syncPayloadV1Schema,
+  syncPayloadV2Schema,
+]);
+
 export type TokenSource = z.infer<typeof tokenSourceSchema>;
 export type Coverage = z.infer<typeof coverageSchema>;
 export type TrustLevel = z.infer<typeof trustLevelSchema>;
 export type UsageBucketV1 = z.infer<typeof usageBucketV1Schema>;
+export type UsageBucketV2 = z.infer<typeof usageBucketV2Schema>;
 export type SyncPayloadV1 = z.infer<typeof syncPayloadV1Schema>;
+export type SyncPayloadV2 = z.infer<typeof syncPayloadV2Schema>;
 
 export type RawTokenUsage = {
   inputTokens: number;

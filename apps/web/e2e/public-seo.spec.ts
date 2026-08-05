@@ -83,7 +83,8 @@ test("Chinese routes render complete localized pages and preserve the locale in 
   expect(privacy).toContain("采集器与上传逻辑已经开源");
   expect(privacy).toContain("body: JSON.stringify(payload)");
   expect(privacy).toContain("sessionFingerprint: z.string().regex");
-  expect(privacy).toContain("buckets: z.array(usageBucketV1Schema)");
+  expect(privacy).toContain("buckets: z.array(usageBucketV2Schema)");
+  expect(privacy).toContain("utcHour: z.number().int().min(0).max(23)");
   expect(privacy).toContain("https://github.com/modelsell/lovtokens/blob/main/packages/collector/src/index.ts");
 
   await page.goto("/docs");
@@ -155,6 +156,9 @@ test("homepage exposes authentication and a signed-in user can reach the persona
   await page.getByLabel("Open account menu").click();
   await page.getByRole("link", { name: "Personal center", exact: true }).first().click();
   await expect(page).toHaveURL(/\/dashboard$/);
+  await page.getByRole("link", { name: "Data dashboard", exact: true }).click();
+  await expect(page).toHaveURL(/\/dashboard\/insights$/);
+  await expect(page.getByRole("heading", { name: "Data dashboard" })).toBeVisible();
 
   await page.goto(`${testOrigin}/settings/account`);
   await expect(page.getByRole("heading", { name: "Account and security" })).toBeVisible();

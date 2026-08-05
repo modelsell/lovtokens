@@ -104,6 +104,35 @@ export const usageDaily = sqliteTable("usage_daily", {
   uniqueIndex("usage_bucket_unique").on(table.userId, table.utcDate, table.source, table.model, table.sessionFingerprint),
 ]);
 
+export const usageHourly = sqliteTable("usage_hourly", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  deviceId: text("device_id").notNull().references(() => devices.id, { onDelete: "cascade" }),
+  utcDate: text("utc_date").notNull(),
+  utcHour: integer("utc_hour").notNull(),
+  source: text("source").notNull(),
+  model: text("model").notNull(),
+  sessionFingerprint: text("session_fingerprint").notNull(),
+  inputTokensTotal: integer("input_tokens_total").notNull(),
+  freshInputTokens: integer("fresh_input_tokens").notNull(),
+  cacheReadTokens: integer("cache_read_tokens").notNull(),
+  cacheWriteTokens: integer("cache_write_tokens").notNull(),
+  outputTokensTotal: integer("output_tokens_total").notNull(),
+  reasoningOutputTokens: integer("reasoning_output_tokens").notNull(),
+  requestCount: integer("request_count").notNull(),
+  firstEventAt: text("first_event_at").notNull(),
+  lastEventAt: text("last_event_at").notNull(),
+  parserVersion: text("parser_version").notNull(),
+  coverage: text("coverage").notNull(),
+  trustLevel: text("trust_level").notNull().default("collector-checked"),
+  quarantined: integer("quarantined", { mode: "boolean" }).notNull().default(false),
+  anomalyReason: text("anomaly_reason"),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull(),
+}, (table) => [
+  uniqueIndex("usage_hourly_bucket_unique").on(table.userId, table.utcDate, table.utcHour, table.source, table.model, table.sessionFingerprint),
+]);
+
 export const leaderboardSnapshots = sqliteTable("leaderboard_snapshots", {
   id: text("id").primaryKey(),
   period: text("period").notNull(),

@@ -55,6 +55,7 @@ try {
       (SELECT COUNT(*) FROM profiles WHERE user_id LIKE 'seed-user-%') AS profiles,
       (SELECT COUNT(*) FROM devices WHERE user_id LIKE 'seed-user-%') AS devices,
       (SELECT COUNT(*) FROM usage_daily WHERE user_id LIKE 'seed-user-%') AS usage_rows,
+      (SELECT COUNT(*) FROM usage_hourly WHERE user_id LIKE 'seed-user-%') AS hourly_rows,
       (SELECT COUNT(*) FROM leaderboard_snapshots WHERE user_id LIKE 'seed-user-%') AS snapshots,
       (SELECT COUNT(*) FROM leaderboard_rank_history WHERE user_id LIKE 'seed-user-%') AS rank_history,
       (SELECT COUNT(*) FROM certificates WHERE user_id LIKE 'seed-user-%') AS certificates,

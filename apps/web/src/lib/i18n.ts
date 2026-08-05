@@ -338,6 +338,7 @@ const zh: Record<string, string> = {
   "Connect device": "连接设备",
 
   "Overview": "概览",
+  "Data dashboard": "数据看板",
   "Share studio": "分享工作室",
   "Certificates": "证书",
   "Achievements": "成就",

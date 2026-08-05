@@ -244,6 +244,41 @@ SELECT
   unixepoch('now') - d * 86400
 FROM activity;
 
+INSERT INTO usage_hourly (
+  id, user_id, device_id, utc_date, utc_hour, source, model, session_fingerprint,
+  input_tokens_total, fresh_input_tokens, cache_read_tokens, cache_write_tokens,
+  output_tokens_total, reasoning_output_tokens, request_count, first_event_at,
+  last_event_at, parser_version, coverage, trust_level, quarantined,
+  anomaly_reason, created_at, updated_at
+)
+SELECT
+  'seed-hourly-' || id,
+  user_id,
+  device_id,
+  utc_date,
+  (request_count * 3 + length(model) + CAST(strftime('%w', utc_date) AS INTEGER)) % 24,
+  source,
+  model,
+  session_fingerprint,
+  input_tokens_total,
+  fresh_input_tokens,
+  cache_read_tokens,
+  cache_write_tokens,
+  output_tokens_total,
+  reasoning_output_tokens,
+  request_count,
+  utc_date || 'T' || printf('%02d', (request_count * 3 + length(model) + CAST(strftime('%w', utc_date) AS INTEGER)) % 24) || ':05:00.000Z',
+  utc_date || 'T' || printf('%02d', (request_count * 3 + length(model) + CAST(strftime('%w', utc_date) AS INTEGER)) % 24) || ':55:00.000Z',
+  parser_version,
+  coverage,
+  trust_level,
+  quarantined,
+  anomaly_reason,
+  created_at,
+  updated_at
+FROM usage_daily
+WHERE user_id LIKE 'seed-user-%' AND utc_date >= date('now', '-89 days');
+
 WITH
 period_sources(period, source, start_date) AS (
   VALUES

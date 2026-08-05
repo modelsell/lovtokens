@@ -12,7 +12,60 @@ export async function getDashboardDetails(userId: string) {
     db.prepare("SELECT COUNT(*) count FROM usage_daily WHERE user_id=?1 AND quarantined=1").bind(userId).first<{ count: number }>(),
     db.prepare("SELECT snapshot_date date,rank,processed_tokens tokens FROM leaderboard_rank_history WHERE user_id=?1 AND period='month' AND source='all' ORDER BY snapshot_date DESC LIMIT 30").bind(userId).all<{ date: string; rank: number; tokens: number }>(),
   ]);
-  return { daily: daily.results, sources: sources.results, models: models.results, rankHistory: rankHistory.results, deviceTotal: Number(deviceHealth?.total || 0), activeDevices: Number(deviceHealth?.active || 0), lastSyncedAt: deviceHealth?.last_synced_at ? Number(deviceHealth.last_synced_at) : null, nowUnix: Number(deviceHealth?.now_unix || 0), today: String(deviceHealth?.today || "1970-01-01"), quarantined: Number(quarantined?.count || 0) };
+  return {
+    daily: daily.results,
+    sources: sources.results,
+    models: models.results,
+    rankHistory: rankHistory.results,
+    deviceTotal: Number(deviceHealth?.total || 0),
+    activeDevices: Number(deviceHealth?.active || 0),
+    lastSyncedAt: deviceHealth?.last_synced_at ? Number(deviceHealth.last_synced_at) : null,
+    nowUnix: Number(deviceHealth?.now_unix || 0),
+    today: String(deviceHealth?.today || "1970-01-01"),
+    quarantined: Number(quarantined?.count || 0),
+  };
+}
+
+export async function getCodingAnalytics(userId: string) {
+  const db = await getD1();
+  if (!db) return null;
+  const [daily, hourly, clock] = await Promise.all([
+    db.prepare(`SELECT utc_date date,source,model,
+      SUM(input_tokens_total) input_tokens,SUM(fresh_input_tokens) fresh_tokens,
+      SUM(cache_read_tokens) cache_read_tokens,SUM(cache_write_tokens) cache_write_tokens,
+      SUM(output_tokens_total) output_tokens,SUM(reasoning_output_tokens) reasoning_tokens,
+      SUM(request_count) requests
+      FROM usage_daily WHERE user_id=?1 AND quarantined=0 AND utc_date>=date('now','-89 days')
+      GROUP BY utc_date,source,model ORDER BY utc_date,source,model`).bind(userId).all<Record<string, unknown>>(),
+    db.prepare(`SELECT utc_date date,utc_hour hour,source,model,
+      SUM(input_tokens_total) input_tokens,SUM(fresh_input_tokens) fresh_tokens,
+      SUM(cache_read_tokens) cache_read_tokens,SUM(cache_write_tokens) cache_write_tokens,
+      SUM(output_tokens_total) output_tokens,SUM(reasoning_output_tokens) reasoning_tokens,
+      SUM(request_count) requests
+      FROM usage_hourly WHERE user_id=?1 AND quarantined=0 AND utc_date>=date('now','-89 days')
+      GROUP BY utc_date,utc_hour,source,model ORDER BY utc_date,utc_hour,source,model`).bind(userId).all<Record<string, unknown>>(),
+    db.prepare("SELECT date('now') today").first<{ today: string }>(),
+  ]);
+  return {
+    daily: daily.results.map(normalizeAnalyticsRow),
+    hourly: hourly.results.map((row) => ({ ...normalizeAnalyticsRow(row), hour: Number(row.hour) })),
+    today: clock?.today || "1970-01-01",
+  };
+}
+
+function normalizeAnalyticsRow(row: Record<string, unknown>) {
+  return {
+    date: String(row.date),
+    source: String(row.source),
+    model: String(row.model),
+    inputTokens: Number(row.input_tokens || 0),
+    freshTokens: Number(row.fresh_tokens || 0),
+    cacheReadTokens: Number(row.cache_read_tokens || 0),
+    cacheWriteTokens: Number(row.cache_write_tokens || 0),
+    outputTokens: Number(row.output_tokens || 0),
+    reasoningTokens: Number(row.reasoning_tokens || 0),
+    requests: Number(row.requests || 0),
+  };
 }
 export async function getDevices(userId: string) { const db = await getD1(); if (!db) return []; const r = await db.prepare("SELECT id,name,status,last_synced_at,created_at FROM devices WHERE user_id=?1 ORDER BY created_at DESC").bind(userId).all<Record<string, unknown>>(); return r.results; }
 export async function getCertificatesForUser(userId: string) { const db = await getD1(); if (!db) return []; const r = await db.prepare("SELECT id,kind,period,processed_tokens,rank,percentile,coverage,trust_level,status,issued_at FROM certificates WHERE user_id=?1 ORDER BY issued_at DESC").bind(userId).all<Record<string, unknown>>(); return r.results; }

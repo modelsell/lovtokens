@@ -2,14 +2,14 @@ import { access } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
 import { createInterface } from "node:readline/promises";
 import { Command } from "commander";
-import { formatTokenCount, processedTokens, syncPayloadV1Schema } from "@lovtokens/token-schema";
+import { formatTokenCount, processedTokens, syncPayloadV2Schema } from "@lovtokens/token-schema";
 import { readConfig, removeConfig, resolveServerUrl, writeConfig } from "./config.js";
 import { installAutoSync, openExternal, removeAutoSync } from "./platform.js";
 import { scanAll } from "./scanner.js";
 import { maybeAutoUpdate } from "./updater.js";
 
 const program = new Command();
-const collectorVersion = "0.1.3";
+const collectorVersion = "0.2.0";
 program.name("lovtokens").description("Your private AI token collector").version(collectorVersion);
 
 program.command("connect").description("Connect this device and run the first sync").option("--server <url>", "LovTokens site URL").action(async ({ server }: { server?: string }) => {
@@ -191,7 +191,7 @@ async function checkForAutoUpdate() {
 }
 
 function makePayload(deviceId: string, buckets: Awaited<ReturnType<typeof scanAll>>["buckets"]) {
-  return syncPayloadV1Schema.parse({ schemaVersion: 1, collectorVersion, deviceId, generatedAt: new Date().toISOString(), buckets });
+  return syncPayloadV2Schema.parse({ schemaVersion: 2, collectorVersion, deviceId, generatedAt: new Date().toISOString(), buckets });
 }
 
 function printCoverage(sources: Awaited<ReturnType<typeof scanAll>>["sources"]) {
