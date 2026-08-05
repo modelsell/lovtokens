@@ -134,6 +134,7 @@ const zh: Record<string, string> = {
   "30 days": "30 天",
   "This month": "本月",
   "All time": "全部时间",
+  "Daily statistics time zone: UTC (UTC+0)": "每日统计时区：UTC（UTC+0）",
   "All": "全部",
   "token leaders.": "Token 排行榜。",
   "Public, aggregate agent usage measured by the open LovTokens collector. Imported data never enters this board.": "由开源 LovTokens 采集器统计的公开智能体汇总使用量。导入数据不会进入此榜单。",

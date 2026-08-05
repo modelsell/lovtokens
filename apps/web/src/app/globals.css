@@ -367,11 +367,12 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .page-hero { padding-bottom: 65px; padding-top: 90px; }
 .page-hero h1 { font-size: clamp(52px, 7vw, 82px); letter-spacing: -.07em; line-height: .95; margin: 20px 0; max-width: 900px; }
 .page-hero p { color: var(--muted); font-size: 18px; line-height: 1.65; margin: 0; max-width: 700px; }
-.filter-bar { align-items: center; border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); display: flex; justify-content: space-between; margin-bottom: 24px; padding: 13px 0; }
+.filter-stack { margin-bottom: 24px; }
+.filter-bar { align-items: center; border-bottom: 1px solid var(--line); border-top: 1px solid var(--line); display: flex; justify-content: space-between; padding: 13px 0; }
 .filters { display: flex; gap: 6px; }
 .filter { color: var(--muted); font-size: 11px; font-weight: 800; padding: 9px 12px; text-transform: uppercase; }
 .filter-active { background: var(--solid-bg); color: var(--solid-fg); }
-.filter-note { color: var(--muted); font-size: 11px; }
+.filter-note { color: var(--muted); display: block; font-size: 10px; margin-top: 8px; }
 .leaderboard-table { background: var(--paper); border: 1px solid var(--line); }
 .leaderboard-head, .leaderboard-row { align-items: center; display: grid; gap: 22px; grid-template-columns: 70px 1.6fr 1fr 80px 160px; }
 .leaderboard-head { color: #8b908a; font-size: 9px; font-weight: 800; letter-spacing: .13em; padding: 15px 22px; text-transform: uppercase; }
