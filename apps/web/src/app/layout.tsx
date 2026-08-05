@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { languageAlternates, localeDetails, siteName, t } from "@/lib/i18n";
@@ -38,5 +39,23 @@ const themeScript = `(() => {
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const [locale, viewer] = await Promise.all([getLocale(), getViewer()]);
-  return <html data-scroll-behavior="smooth" lang={localeDetails(locale).htmlLang} suppressHydrationWarning><head><script dangerouslySetInnerHTML={{ __html: themeScript }} /></head><body><SiteHeader locale={locale} viewer={viewer} /><main>{children}</main><SiteFooter locale={locale} /></body></html>;
+  return (
+    <html data-scroll-behavior="smooth" lang={localeDetails(locale).htmlLang} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-B3K11DETJY" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-B3K11DETJY');`}
+        </Script>
+      </head>
+      <body>
+        <SiteHeader locale={locale} viewer={viewer} />
+        <main>{children}</main>
+        <SiteFooter locale={locale} />
+      </body>
+    </html>
+  );
 }
