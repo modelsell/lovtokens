@@ -9,6 +9,9 @@ runtime folders unless the website directly imports them.
 - [`achievement-system-launch`](./achievement-system-launch/): launch posters,
   generated background plates, and the deterministic poster renderer for the
   LovTokens achievement system release.
+- [`producthunt-launch`](./producthunt-launch/): Product Hunt submission copy,
+  launch-day promotion drafts, the 240 × 240 thumbnail, and three production
+  gallery screenshots sized at 1270 × 760.
 
 ## Folder convention
 
