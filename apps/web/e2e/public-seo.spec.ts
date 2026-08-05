@@ -16,11 +16,11 @@ test("home explains the product and switches between agent and one-command setup
   await expect(page.getByRole("link", { name: /LovTokens source code on GitHub · (?:\d+|—) Stars/ })).toHaveAttribute("href", "https://github.com/modelsell/lovtokens");
   await expect(page.locator(".github-repo-link > svg")).toBeVisible();
   await expect(page.locator(".github-star-count")).toHaveText(/^(?:\d+|—)$/);
-  expect(await page.locator(".desktop-nav a").evaluateAll((links) => links.map((link) => link.getAttribute("href")))).toEqual(["/leaderboard", "/methodology", "/docs", "/privacy"]);
+  expect(await page.locator(".desktop-nav a").evaluateAll((links) => links.map((link) => link.getAttribute("href")))).toEqual(["/leaderboard", "/teams", "/methodology", "/docs", "/privacy"]);
   await expect(page.locator(".desktop-nav").getByRole("link", { name: "Privacy contract" })).toHaveAttribute("href", "/privacy");
   await expect(page.locator(".desktop-nav").getByRole("link", { name: "Journal" })).toHaveCount(0);
-  await expect(page.locator(".mobile-menu nav a").nth(2)).toHaveAttribute("href", "/docs");
-  await expect(page.locator(".mobile-menu nav a").nth(3)).toHaveAttribute("href", "/privacy");
+  await expect(page.locator('.mobile-menu nav a[href="/docs"]')).toHaveText("Docs");
+  await expect(page.locator('.mobile-menu nav a[href="/privacy"]')).toHaveText("Privacy contract");
   await expect(page.locator(".mobile-menu nav").getByRole("link", { name: "Journal" })).toHaveCount(0);
   await expect(page.getByRole("tab", { name: /Set up with Agent/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("button", { name: "Copy recommendation" })).toBeVisible();
