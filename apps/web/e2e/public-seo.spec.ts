@@ -13,6 +13,15 @@ test("home explains the product and switches between agent and one-command setup
   await expect(
     page.getByRole("heading", { level: 1, name: "See your AI coding usage." }),
   ).toBeVisible();
+  await expect(page.getByRole("link", { name: /LovTokens source code on GitHub · (?:\d+|—) Stars/ })).toHaveAttribute("href", "https://github.com/modelsell/lovtokens");
+  await expect(page.locator(".github-repo-link > svg")).toBeVisible();
+  await expect(page.locator(".github-star-count")).toHaveText(/^(?:\d+|—)$/);
+  expect(await page.locator(".desktop-nav a").evaluateAll((links) => links.map((link) => link.getAttribute("href")))).toEqual(["/leaderboard", "/methodology", "/docs", "/privacy"]);
+  await expect(page.locator(".desktop-nav").getByRole("link", { name: "Privacy contract" })).toHaveAttribute("href", "/privacy");
+  await expect(page.locator(".desktop-nav").getByRole("link", { name: "Journal" })).toHaveCount(0);
+  await expect(page.locator(".mobile-menu nav a").nth(2)).toHaveAttribute("href", "/docs");
+  await expect(page.locator(".mobile-menu nav a").nth(3)).toHaveAttribute("href", "/privacy");
+  await expect(page.locator(".mobile-menu nav").getByRole("link", { name: "Journal" })).toHaveCount(0);
   await expect(page.getByRole("tab", { name: /Set up with Agent/ })).toHaveAttribute("aria-selected", "true");
   await expect(page.getByRole("button", { name: "Copy recommendation" })).toBeVisible();
   await expect(page.getByRole("link", { name: /See the full instructions/ })).toHaveAttribute("href", `${testOrigin}/agent-register.md`);
@@ -20,6 +29,10 @@ test("home explains the product and switches between agent and one-command setup
   await expect(page.getByText("Run one command")).toBeVisible();
   await expect(page.getByText(`npx lovtokens@latest agent-register --server ${testOrigin}`, { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Copy setup command" })).toBeVisible();
+  await expect(page.getByText("The collector is open source.")).toBeVisible();
+  await expect(page.getByText("npx lovtokens@latest show-data", { exact: true }).last()).toBeVisible();
+  await expect(page.getByRole("link", { name: /See upload code and privacy details/ })).toHaveAttribute("href", "/privacy#inspect-upload");
+  await expect(page.getByRole("link", { name: /View the open-source project/ })).toHaveAttribute("href", "https://github.com/modelsell/lovtokens");
   await page.getByRole("tab", { name: /Set up with Agent/ }).click();
   await expect(page.getByRole("button", { name: "Copy recommendation" })).toBeVisible();
 });
@@ -62,6 +75,16 @@ test("Chinese routes render complete localized pages and preserve the locale in 
   expect(docs).toContain("<title>LovTokens 采集器文档 · LovTokens</title>");
   expect(docs).toContain(`rel="canonical" href="${testOrigin}/zh/docs"`);
   expect(docs).toContain(`hrefLang="en" href="${testOrigin}/docs"`);
+  expect(docs).not.toContain('id="inspect-upload"');
+  expect(docs).not.toContain("body: JSON.stringify(payload)");
+
+  const privacy = await (await request.get("/zh/privacy")).text();
+  expect(privacy).toContain('id="inspect-upload"');
+  expect(privacy).toContain("采集器与上传逻辑已经开源");
+  expect(privacy).toContain("body: JSON.stringify(payload)");
+  expect(privacy).toContain("sessionFingerprint: z.string().regex");
+  expect(privacy).toContain("buckets: z.array(usageBucketV1Schema)");
+  expect(privacy).toContain("https://github.com/modelsell/lovtokens/blob/main/packages/collector/src/index.ts");
 
   await page.goto("/docs");
   await page.locator(".site-header").getByRole("combobox", { name: "Language" }).selectOption("zh");

@@ -104,6 +104,10 @@ const zh: Record<string, string> = {
   "Private by default": "默认私密",
   "Absolute-value upserts": "绝对值幂等更新",
   "Open schema": "开放数据结构",
+  "The collector is open source.": "采集器已开源。",
+  "Want to inspect the upload first? Run this command before connecting or syncing:": "想先查看上传数据？请在连接或同步前运行：",
+  "See upload code and privacy details": "查看上传代码与隐私说明",
+  "View the open-source project": "访问开源项目",
 
   "Leaderboard": "排行榜",
   "Methodology": "统计方法",

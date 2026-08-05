@@ -2,7 +2,7 @@ import { PageHero } from "@/components/page-hero";
 import { t } from "@/lib/i18n";
 import { getLocale, localizedMetadata } from "@/lib/i18n-server";
 
-export const generateMetadata = () => localizedMetadata({ path: "/docs", title: "LovTokens Collector Documentation", zhTitle: "LovTokens 采集器文档", description: "Install, connect, inspect, sync and remove the open LovTokens token collector.", zhDescription: "安装、连接、检查、同步和移除开源 LovTokens Token 采集器。" });
+export const generateMetadata = () => localizedMetadata({ path: "/docs", title: "LovTokens Collector Documentation", zhTitle: "LovTokens 采集器文档", description: "Install, connect, sync and remove the open LovTokens token collector.", zhDescription: "安装、连接、同步和移除开源 LovTokens Token 采集器。" });
 
 export default async function DocsPage() {
   const locale = await getLocale();
@@ -16,10 +16,6 @@ export default async function DocsPage() {
       <h2>{t(locale, "Connect")}</h2>
       <div className="docs-command"><code>npx lovtokens@latest connect --server &lt;LovTokens URL&gt;</code></div>
       <p>{t(locale, "A browser opens with a one-time code. Create an account or sign in, approve that code, and the CLI performs its first scan.")}</p>
-
-      <h2>{t(locale, "Inspect before upload")}</h2>
-      <pre><code>npx lovtokens@latest show-data</code></pre>
-      <p>{t(locale, "This prints the complete JSON payload. It contains schema version, collector version, a random device ID, timestamps, and aggregate usage buckets.")}</p>
 
       <h2>{t(locale, "Commands")}</h2>
       <table><tbody>

@@ -161,7 +161,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .language-switch::after { border-bottom: 1.5px solid currentColor; border-right: 1.5px solid currentColor; content: ""; height: 5px; pointer-events: none; position: absolute; right: 10px; top: 10px; transform: rotate(45deg); width: 5px; }
 .language-switch-footer { justify-self: start; }
 .language-switch-footer select { max-width: 180px; }
-.icon-link { align-items: center; display: flex; justify-content: center; padding: 9px; }
+.github-repo-link { align-items: center; border: 1px solid var(--line); display: flex; height: 36px; padding: 0 9px; }
+.github-repo-link:hover { background: var(--surface-hover); }
+.github-star-count { align-items: center; border-left: 1px solid var(--line); display: flex; font-size: 10px; font-weight: 850; gap: 4px; margin-left: 8px; min-width: 22px; padding-left: 8px; }
 .header-cta { background: var(--solid-bg); color: var(--solid-fg); font-size: 12px; font-weight: 800; padding: 12px 16px; text-transform: uppercase; }
 .header-login { font-size: 12px; font-weight: 800; padding: 11px 10px; }
 .account-menu { position: relative; }
@@ -388,8 +390,18 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .privacy-grid { align-items: center; display: grid; gap: 60px; grid-template-columns: .8fr 1.2fr; }
 .privacy-grid h2 { font-size: 48px; letter-spacing: -.06em; line-height: 1; margin: 12px 0; }
 .privacy-grid > div > p { line-height: 1.7; max-width: 460px; }
+.privacy-proof { display: grid; gap: 16px; }
 .privacy-list { display: grid; grid-template-columns: repeat(2, 1fr); }
 .privacy-list span { align-items: center; border: 1px solid rgba(17,21,18,.25); display: flex; font-size: 13px; font-weight: 700; gap: 10px; min-height: 58px; padding: 15px; }
+.open-source-proof { border: 1px solid rgba(17,21,18,.25); display: grid; gap: 13px; padding: 20px; }
+.open-source-proof-head { align-items: center; display: flex; gap: 11px; }
+.open-source-proof-head > div { align-items: baseline; display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.open-source-proof-head strong { font-size: 17px; }
+.open-source-proof-head span { border: 1px solid rgba(17,21,18,.3); font-family: ui-monospace, monospace; font-size: 8px; font-weight: 800; letter-spacing: .08em; padding: 3px 5px; }
+.open-source-proof p { font-size: 12px; line-height: 1.6; margin: 0; }
+.open-source-proof > code { background: var(--dark); color: var(--acid); display: block; font-size: 12px; overflow-x: auto; padding: 13px 15px; white-space: nowrap; }
+.open-source-links { display: flex; flex-wrap: wrap; gap: 10px 22px; }
+.open-source-links a { align-items: center; display: inline-flex; font-size: 10px; font-weight: 850; gap: 6px; text-transform: uppercase; }
 
 .page-hero { padding-bottom: 65px; padding-top: 90px; }
 .page-hero h1 { font-size: clamp(52px, 7vw, 82px); letter-spacing: -.07em; line-height: .95; margin: 20px 0; max-width: 900px; }
@@ -502,9 +514,14 @@ a.profile-achievement-item:hover, .profile-achievement-item:target { background:
 .prose-shell code { background: var(--surface-subtle); padding: 2px 5px; }
 .prose-shell pre { background: var(--dark); color: #e9ece6; overflow: auto; padding: 20px; }
 .prose-shell pre code { background: transparent; padding: 0; }
+.prose-shell .source-code { font-size: 12px; line-height: 1.65; }
 .prose-shell table { border-collapse: collapse; width: 100%; }
 .prose-shell td, .prose-shell th { border: 1px solid var(--line); padding: 12px; text-align: left; }
 .callout { background: var(--acid); color: var(--acid-ink); margin: 30px 0; padding: 22px; }
+.open-source-callout strong { display: block; font-size: 18px; }
+.open-source-callout p { color: inherit; margin-bottom: 0; }
+.source-links { display: flex; flex-wrap: wrap; gap: 10px 20px; }
+.source-links a { border-bottom: 1px solid currentColor; color: var(--ink); font-size: 12px; font-weight: 800; }
 .docs-command { background: var(--dark); color: white; margin: 25px 0; padding: 25px; }
 .docs-command code { background: transparent; color: var(--acid); }
 
@@ -856,7 +873,7 @@ a.profile-achievement-item:hover, .profile-achievement-item:target { background:
   .shell { padding-inline: 18px; }
   .header-actions { gap: 7px; }
   .theme-switcher button { width: 22px; }
-  .header-cta, .header-login, .icon-link, .account-name { display: none; }
+  .header-cta, .header-login, .github-repo-link, .account-name { display: none; }
   .home-account { margin-top: 18px; }
   .home-account-head, .home-account-foot { align-items: start; flex-direction: column; gap: 16px; }
   .home-account-stats { grid-template-columns: repeat(2, 1fr); }
