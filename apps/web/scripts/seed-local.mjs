@@ -58,7 +58,9 @@ try {
       (SELECT COUNT(*) FROM leaderboard_snapshots WHERE user_id LIKE 'seed-user-%') AS snapshots,
       (SELECT COUNT(*) FROM leaderboard_rank_history WHERE user_id LIKE 'seed-user-%') AS rank_history,
       (SELECT COUNT(*) FROM certificates WHERE user_id LIKE 'seed-user-%') AS certificates,
-      (SELECT COUNT(*) FROM achievements WHERE user_id LIKE 'seed-user-%') AS achievements
+      (SELECT COUNT(*) FROM achievements WHERE user_id LIKE 'seed-user-%') AS achievements,
+      (SELECT COUNT(*) FROM teams WHERE id LIKE 'seed-team-%') AS teams,
+      (SELECT COUNT(*) FROM team_members WHERE team_id LIKE 'seed-team-%') AS team_members
     FROM user WHERE id LIKE 'seed-user-%';`,
   ]);
 

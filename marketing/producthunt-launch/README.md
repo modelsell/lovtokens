@@ -41,6 +41,9 @@ No prompts. No code. Open-source collector.
 
 https://lovtokens.com
 
+Community reply history and follow-up angles are tracked in
+[`x-outreach-log.md`](./x-outreach-log.md).
+
 ## LinkedIn post
 
 Today I am launching LovTokens: a private AI token portfolio for developers using Codex, Claude Code, and WorkBuddy.

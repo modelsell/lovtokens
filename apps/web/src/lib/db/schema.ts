@@ -131,6 +131,30 @@ export const leaderboardRankHistory = sqliteTable("leaderboard_rank_history", {
   uniqueIndex("leaderboard_rank_history_unique").on(table.userId, table.period, table.source, table.snapshotDate),
 ]);
 
+export const teams = sqliteTable("teams", {
+  id: text("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description").notNull().default(""),
+  ownerUserId: text("owner_user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  isPublic: integer("is_public", { mode: "boolean" }).notNull().default(false),
+  inviteCodeHash: text("invite_code_hash").notNull().unique(),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+}, (table) => [
+  uniqueIndex("teams_owner_unique").on(table.ownerUserId),
+]);
+
+export const teamMembers = sqliteTable("team_members", {
+  teamId: text("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  role: text("role").notNull().default("member"),
+  joinedAt: integer("joined_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.teamId, table.userId] }),
+  uniqueIndex("team_members_user_unique").on(table.userId),
+]);
+
 export const certificates = sqliteTable("certificates", {
   id: text("id").primaryKey(),
   userId: text("user_id").references(() => user.id, { onDelete: "set null" }),

@@ -455,4 +455,25 @@ SELECT
 FROM achievement_users au
 JOIN achievement_keys ak ON ak.position <= au.max_position;
 
+INSERT INTO teams (id, slug, name, description, owner_user_id, is_public, invite_code_hash, created_at, updated_at)
+VALUES
+  ('seed-team-01', 'nebula-builders', '星云构建者', '跨智能体协作挑战', 'seed-user-01', 1, 'seed-invite-hash-01', unixepoch('now') - 90 * 86400, unixepoch('now')),
+  ('seed-team-02', 'terminal-runners', '终端远征队', '连续构建与活跃天数挑战', 'seed-user-07', 1, 'seed-invite-hash-02', unixepoch('now') - 75 * 86400, unixepoch('now')),
+  ('seed-team-03', 'cache-alchemists', '缓存炼金术士', '一起探索更高效的 AI 编程', 'seed-user-13', 1, 'seed-invite-hash-03', unixepoch('now') - 60 * 86400, unixepoch('now')),
+  ('seed-team-04', 'agent-collective', 'Agent 联盟', 'Codex、Claude Code 与 WorkBuddy 混合挑战', 'seed-user-19', 1, 'seed-invite-hash-04', unixepoch('now') - 45 * 86400, unixepoch('now')),
+  ('seed-team-05', 'private-lab', '私密实验室', '仅成员可见的本地隐私测试团队', 'seed-user-25', 0, 'seed-invite-hash-05', unixepoch('now') - 30 * 86400, unixepoch('now'));
+
+WITH RECURSIVE members(n) AS (
+  SELECT 1
+  UNION ALL
+  SELECT n + 1 FROM members WHERE n < 30
+)
+INSERT INTO team_members (team_id, user_id, role, joined_at)
+SELECT
+  printf('seed-team-%02d', CAST((n - 1) / 6 AS INTEGER) + 1),
+  printf('seed-user-%02d', n),
+  CASE WHEN (n - 1) % 6 = 0 THEN 'owner' ELSE 'member' END,
+  unixepoch('now') - (40 - ((n - 1) % 6) * 3) * 86400
+FROM members;
+
 PRAGMA optimize;

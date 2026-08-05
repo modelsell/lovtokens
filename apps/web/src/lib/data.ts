@@ -45,6 +45,46 @@ export type PublicAchievement = {
   processedTokens?: number;
 };
 
+export type TeamLeaderboardEntry = {
+  rank: number;
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  memberCount: number;
+  activeMembers: number;
+  processedTokens: number;
+  activeDays: number;
+  percentile: number;
+  codexTokens: number;
+  claudeTokens: number;
+  workbuddyTokens: number;
+};
+
+export type TeamMemberEntry = {
+  rank: number;
+  userId: string;
+  handle: string | null;
+  displayName: string;
+  avatarUrl: string | null;
+  role: "owner" | "member";
+  joinedAt: number;
+  processedTokens: number;
+  activeDays: number;
+  codexTokens: number;
+  claudeTokens: number;
+  workbuddyTokens: number;
+  showExactTokens: boolean;
+};
+
+export type TeamDetail = Omit<TeamLeaderboardEntry, "rank" | "percentile"> & {
+  isPublic: boolean;
+  isMember: boolean;
+  isOwner: boolean;
+  createdAt: number;
+  members: TeamMemberEntry[];
+};
+
 export type CertificateRecord = {
   id: string;
   userId: string | null;
