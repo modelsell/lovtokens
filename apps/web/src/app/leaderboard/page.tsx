@@ -1,13 +1,13 @@
 import { JsonLd } from "@/components/json-ld";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 import { LocaleLink } from "@/components/locale-link";
-import { LocalizedTimezoneClock } from "@/components/localized-timezone-clock";
 import { PageHero } from "@/components/page-hero";
 import { getLeaderboard } from "@/lib/repository";
 import { siteUrl } from "@/lib/runtime";
 import type { Locale } from "@/lib/i18n";
 import { localePath, t } from "@/lib/i18n";
 import { getLocale, localizedMetadata } from "@/lib/i18n-server";
+import { formatLocaleTimeZone } from "@/lib/locale-timezone";
 
 export const generateMetadata = () => localizedMetadata({ path: "/leaderboard", title: "AI Token Usage Leaderboard", zhTitle: "AI Token 使用量排行榜", description: "Public Codex, Claude Code, and WorkBuddy token usage rankings, measured from privacy-preserving local collectors.", zhDescription: "通过保护隐私的本地采集器统计的 Codex、Claude Code 与 WorkBuddy 公开 Token 使用量排名。" });
 export const revalidate = 600;
@@ -27,5 +27,5 @@ export function FilterBar({ period, source, locale = "en" }: { period: string; s
 }
 
 export function LeaderboardFootnote({ locale = "en" }: { locale?: Locale }) {
-  return <p className="leaderboard-note"><LocalizedTimezoneClock baseLabel={t(locale, "Daily statistics time zone: UTC (UTC+0)")} initialNow={new Date().toISOString()} locale={locale} /><span>{t(locale, "Only information users choose to make public is shown.")}</span></p>;
+  return <p className="leaderboard-note"><span>{t(locale, "Daily statistics time zone: UTC (UTC+0)")} · {formatLocaleTimeZone(locale)}</span><span>{t(locale, "Only information users choose to make public is shown.")}</span></p>;
 }
