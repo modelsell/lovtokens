@@ -31,6 +31,12 @@ export default async function CertificatesDashboard() {
   const certificates = rows as Array<Record<string, unknown>>;
   const earned = new Map(achievementRows.map((row) => [String(row.achievement_key), Number(row.earned_at)]));
   const total = Number(summary?.total || 0);
+  const profileRow = (summary?.profile || {}) as Record<string, unknown>;
+  const shareProfile = {
+    displayName: Boolean(profileRow.is_anonymous) ? `Anonymous · ${String(profileRow.handle || "").slice(-4).toUpperCase()}` : String(profileRow.display_name || session?.user.name || "LovTokens Builder"),
+    handle: String(profileRow.handle || ""),
+    isPublic: Boolean(profileRow.is_public),
+  };
   const milestoneCertificates = new Map(certificates.filter((row) => String(row.kind) === "milestone").map((row) => [Number(row.period), row]));
   const milestones: AchievementBadgeData[] = MILESTONE_THRESHOLDS.map((target, index) => {
     const certificate = milestoneCertificates.get(target);
@@ -76,15 +82,15 @@ export default async function CertificatesDashboard() {
     </div>
     <section className="achievement-badge-section">
       <header><span className="eyebrow">{locale === "zh" ? "探索与习惯" : "EXPLORATION & HABITS"}</span><h2>{locale === "zh" ? "藏在使用轨迹里的惊喜" : "Surprises hidden in your activity"}</h2><p>{locale === "zh" ? "从多智能体、模型探索到持续活动，每一枚都由正 Token 活动数据解锁。" : "From multi-agent mastery and model exploration to activity streaks, every badge unlocks from positive-token activity."}</p></header>
-      <div className="achievement-badge-grid achievement-special-grid">{exploration.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} siteOrigin={siteUrl()} />)}</div>
+      <div className="achievement-badge-grid achievement-special-grid">{exploration.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} shareProfile={shareProfile} siteOrigin={siteUrl()} />)}</div>
     </section>
     <section className="achievement-badge-section">
       <header><span className="eyebrow">{locale === "zh" ? "进阶收藏" : "ADVANCED COLLECTION"}</span><h2>{locale === "zh" ? "为长期探索者准备的稀有徽章" : "Rare badges for long-running explorers"}</h2><p>{locale === "zh" ? "跨智能体、模型、会话、活跃周期与缓存阶梯继续扩展收藏。" : "Expand the collection across agents, models, sessions, activity rhythms, and cache tiers."}</p></header>
-      <div className="achievement-badge-grid achievement-special-grid">{advanced.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} siteOrigin={siteUrl()} />)}</div>
+      <div className="achievement-badge-grid achievement-special-grid">{advanced.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} shareProfile={shareProfile} siteOrigin={siteUrl()} />)}</div>
     </section>
     <section className="achievement-badge-section achievement-legendary-section">
       <header><span className="eyebrow">{locale === "zh" ? "传奇收藏" : "LEGENDARY COLLECTION"}</span><h2>{locale === "zh" ? "值得长期追逐的终局徽章" : "Endgame badges worth a long pursuit"}</h2><p>{locale === "zh" ? "从三智能体十亿级驾驭到千亿 Token 宇宙，这组徽章为持续数月乃至一年的收藏旅程保留。" : "From billion-scale mastery across three agents to a hundred-billion-token cosmos, these badges reward pursuits lasting months or even years."}</p></header>
-      <div className="achievement-badge-grid achievement-special-grid">{legendary.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} siteOrigin={siteUrl()} />)}</div>
+      <div className="achievement-badge-grid achievement-special-grid">{legendary.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} shareProfile={shareProfile} siteOrigin={siteUrl()} />)}</div>
     </section>
     <section className="achievement-badge-section achievement-milestone-section">
       <header><span className="eyebrow">{locale === "zh" ? "里程碑系列" : "MILESTONE SERIES"}</span><h2>{locale === "zh" ? "带证明资料的 Token 收藏徽章" : "Token badges with proof records"}</h2><p>{locale === "zh" ? "达到累计 Token 门槛后生成独立编号、证明页面与可下载收藏卡。" : "Reach a lifetime token threshold to receive an independent ID, proof page, and downloadable collectible cards."}</p></header>

@@ -49,4 +49,10 @@ describe("AchievementBadge", () => {
 
     expect(screen.getByText(/4 \/ 7 天/)).toBeInTheDocument();
   });
+
+  it("offers the badge studio for earned visual achievements", () => {
+    render(<AchievementBadge achievement={{ ...badge, key: "night-owl", image: "/achievements/night-owl.png", unlocked: true, issuedAt: 1_735_689_600 }} locale="zh" shareProfile={{ displayName: "Jie", handle: "jie", isPublic: true }} siteOrigin="https://lovtokens.test" />);
+
+    expect(screen.getByRole("button", { name: "分享徽章" })).toBeInTheDocument();
+  });
 });

@@ -3,7 +3,7 @@ export const shareTargets = ["native", ...directShareTargets, "copy-text", "copy
 
 export type DirectShareTarget = (typeof directShareTargets)[number];
 export type ShareTarget = (typeof shareTargets)[number];
-export type ShareContentKind = "profile" | "month" | "certificate";
+export type ShareContentKind = "profile" | "month" | "certificate" | "achievement";
 export type ShareEvent = "modal_open" | "target_click" | "native_handoff" | "landing" | "cta_click" | "signup";
 
 export type SharePayload = {

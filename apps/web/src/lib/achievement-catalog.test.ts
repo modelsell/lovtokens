@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advancedAchievements, legendaryAchievements } from "./achievement-catalog";
+import { advancedAchievements, earnedBehaviorAchievements, legendaryAchievements } from "./achievement-catalog";
 import { EMPTY_ACHIEVEMENT_METRICS } from "./achievement-metrics";
 
 describe("advancedAchievements", () => {
@@ -43,5 +43,16 @@ describe("advancedAchievements", () => {
     const [achievement] = advancedAchievements(EMPTY_ACHIEVEMENT_METRICS, "en", new Map([["tri-agent-commander", earnedAt]]));
 
     expect(achievement).toMatchObject({ unlocked: false, issuedAt: undefined });
+  });
+
+  it("maps persisted public achievements to localized unlocked badges", () => {
+    const achievements = earnedBehaviorAchievements([
+      { key: "model-explorer", earnedAt: 200 },
+      { key: "night-owl", earnedAt: 100 },
+      { key: "removed-rule", earnedAt: 300 },
+    ], "zh");
+
+    expect(achievements.map(({ key }) => key)).toEqual(["model-explorer", "night-owl"]);
+    expect(achievements[0]).toMatchObject({ title: "模型星图师", unlocked: true, issuedAt: 200, tokens: 6, target: 6 });
   });
 });

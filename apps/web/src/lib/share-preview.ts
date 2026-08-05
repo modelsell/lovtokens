@@ -7,6 +7,10 @@ export function profilePreviewKey(handle: string, statsVersion: number, privacyV
   return `social-v1/profile/${handle}/${statsVersion}-${privacyVersion}/${theme}.png`;
 }
 
+export function monthlyPreviewKey(handle: string, statsVersion: number, privacyVersion: number, theme: ShareTheme) {
+  return `social-v1/month/${handle}/${statsVersion}-${privacyVersion}/${theme}.png`;
+}
+
 export function certificatePreviewKey(id: string, issuedAt: number, status: string, locale: "en" | "zh", style: CertificateStyle) {
   return `social-v1/certificate/${id}/${issuedAt}-${status}/${locale}/${style}.png`;
 }

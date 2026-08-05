@@ -4,7 +4,7 @@ import { getD1 } from "@/lib/runtime";
 
 const schema = z.object({
   contentId: z.string().min(1).max(100),
-  contentKind: z.enum(["profile", "month", "certificate"]),
+  contentKind: z.enum(["profile", "month", "certificate", "achievement"]),
   target: z.enum(["native", "x", "linkedin", "facebook", "telegram", "whatsapp", "copy-text", "copy-link", "copy-image", "download"]),
   event: z.enum(["modal_open", "target_click", "native_handoff", "landing", "cta_click", "signup"]),
 });

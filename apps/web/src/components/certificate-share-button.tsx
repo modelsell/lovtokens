@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Copy, Download, Send, Share2, X } from "lucide-react";
-import { rasterizeSvgToPng, triggerPngDownload } from "@/lib/client-png";
+import { Check, Download, Image as ImageIcon, Share2, X } from "lucide-react";
+import { copyPngToClipboard, rasterizeSvgToPng, triggerPngDownload } from "@/lib/client-png";
 import { formatTokenCount } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
 import { localePath } from "@/lib/i18n";
 import { trackShareEvent } from "@/lib/share-analytics";
 import { directShareTargets, directShareUrl, trackingUrl, type ShareTarget } from "@/lib/share-targets";
 import type { CertificateStyle } from "@/lib/share-preview";
+import { XPublishButton } from "./x-publish-button";
 /* eslint-disable @next/next/no-img-element -- achievement images are generated SVG endpoints */
 
 const targetNames = { x: "X", linkedin: "LinkedIn", facebook: "Facebook", telegram: "Telegram", whatsapp: "WhatsApp" } as const;
@@ -35,7 +36,9 @@ export function CertificateShareButton({ id, locale, siteOrigin, title, processe
   const closeRef = useRef<HTMLButtonElement>(null);
   const encodedId = encodeURIComponent(id);
   const imageUrl = `/certificate/${encodedId}/image?lang=${locale}&style=${style}`;
-  const canonicalUrl = `${siteOrigin}${localePath(`/certificate/${encodedId}`, locale)}`;
+  const sharePageUrl = new URL(localePath(`/certificate/${encodedId}`, locale), siteOrigin);
+  sharePageUrl.searchParams.set("share_style", style);
+  const canonicalUrl = sharePageUrl.toString();
   const filename = `lovtokens-achievement-${id}-${style}.png`;
 
   useEffect(() => {
@@ -45,7 +48,7 @@ export function CertificateShareButton({ id, locale, siteOrigin, title, processe
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", escape);
     closeRef.current?.focus();
-    void trackShareEvent(id, "certificate", "native", "modal_open");
+    void trackShareEvent(id, "certificate", "copy-image", "modal_open");
     return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", escape); };
   }, [id, open]);
 
@@ -77,30 +80,12 @@ export function CertificateShareButton({ id, locale, siteOrigin, title, processe
     setLoading(true);
   }
 
-  async function nativeShare() {
-    const data = payload("native");
-    void trackShareEvent(id, "certificate", "native", "target_click");
-    try {
-      const file = blob ? new File([blob], filename, { type: "image/png" }) : null;
-      if (navigator.share) {
-        const files = file && navigator.canShare?.({ files: [file] }) ? [file] : undefined;
-        await navigator.share({ title: data.title, text: `${data.text}\n${data.url}`, url: data.url, files });
-        setStatus(locale === "zh" ? "成就内容已交给系统分享。" : "Achievement handed to system share.");
-        void trackShareEvent(id, "certificate", "native", "native_handoff");
-      } else {
-        await navigator.clipboard.writeText(`${data.text}\n${data.url}`);
-        setStatus(locale === "zh" ? "当前浏览器不支持系统分享，文案和链接已复制。" : "System share is unavailable; copy and link were copied.");
-      }
-    } catch (error) {
-      if (!(error instanceof DOMException && error.name === "AbortError")) setStatus(locale === "zh" ? "未能打开系统分享。" : "Could not open system share.");
-    }
-  }
-
-  async function copy() {
-    const data = payload("copy-text");
-    await navigator.clipboard.writeText(`${data.text}\n${data.url}`);
-    setStatus(locale === "zh" ? "文案和证明链接已复制。" : "Copy and proof link copied.");
-    void trackShareEvent(id, "certificate", "copy-text", "target_click");
+  async function copyImage() {
+    if (!blob) return;
+    const copied = await copyPngToClipboard(blob);
+    if (!copied) triggerPngDownload(blob, filename);
+    setStatus(copied ? (locale === "zh" ? "当前成就图片已复制。" : "Current achievement image copied.") : (locale === "zh" ? "浏览器不支持复制图片，已改为下载当前 PNG。" : "Image copy is unavailable, so the current PNG was downloaded."));
+    void trackShareEvent(id, "certificate", "copy-image", "target_click");
   }
 
   function download() {
@@ -110,7 +95,7 @@ export function CertificateShareButton({ id, locale, siteOrigin, title, processe
     void trackShareEvent(id, "certificate", "download", "target_click");
   }
 
-  const directLinks = useMemo(() => directShareTargets.map((target) => ({ target, label: targetNames[target], href: directShareUrl(target, payload(target)) })), [canonicalUrl, message]); // eslint-disable-line react-hooks/exhaustive-deps
+  const directLinks = useMemo(() => directShareTargets.filter((target) => target !== "x").map((target) => ({ target, label: targetNames[target], href: directShareUrl(target, payload(target)) })), [canonicalUrl, message]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return <>
     <button className={className || "certificate-share-trigger"} onClick={openStudio} type="button"><Share2 aria-hidden="true" size={compact ? 13 : 15} />{locale === "zh" ? "分享成就" : "Share achievement"}</button>
@@ -118,16 +103,17 @@ export function CertificateShareButton({ id, locale, siteOrigin, title, processe
       <div aria-label={locale === "zh" ? "分享成就" : "Share achievement"} aria-modal="true" className="share-poster-dialog share-studio-dialog" role="dialog">
         <header className="share-poster-head"><div><span className="eyebrow">LovTokens</span><h2>{locale === "zh" ? "分享成就" : "Share achievement"}</h2><p>{title}</p></div><button aria-label={locale === "zh" ? "关闭分享成就" : "Close achievement share"} className="share-poster-close" onClick={() => setOpen(false)} ref={closeRef} type="button"><X size={20} /></button></header>
         <div className="share-poster-body">
-          <div className="share-poster-preview"><img alt={`${title} · ${style}`} height={1350} src={imageUrl} width={1080} /></div>
+          <div className="share-preview-column">
+            <div className="share-poster-preview"><img alt={`${title} · ${style}`} height={1350} src={imageUrl} width={1080} /></div>
+          </div>
           <div className="share-poster-controls share-studio-controls">
             <div className="share-studio-scroll">
-              <div aria-label={locale === "zh" ? "成就卡片样式" : "Achievement card style"} className="share-kind-switch" role="group"><button aria-pressed={style === "collector"} onClick={() => selectStyle("collector")} type="button">{locale === "zh" ? "金属典藏" : "Metal Collector"}</button><button aria-pressed={style === "archive"} onClick={() => selectStyle("archive")} type="button">{locale === "zh" ? "档案典藏" : "Archive Edition"}</button></div>
+              <div className="share-side-options"><div aria-label={locale === "zh" ? "成就卡片样式" : "Achievement card style"} className="share-kind-switch" role="group"><button aria-pressed={style === "collector"} onClick={() => selectStyle("collector")} type="button">{locale === "zh" ? "金属典藏" : "Metal Collector"}</button><button aria-pressed={style === "archive"} onClick={() => selectStyle("archive")} type="button">{locale === "zh" ? "档案典藏" : "Archive Edition"}</button></div></div>
               <label className="share-copy-editor"><span>{locale === "zh" ? "分享文案" : "Share copy"}</span><textarea maxLength={500} onChange={(event) => setMessage(event.target.value)} rows={4} value={message} /></label>
-              <div className="share-direct-targets">{directLinks.map(({ target, href, label }) => <a href={href} key={target} onClick={() => void trackShareEvent(id, "certificate", target, "target_click")} rel="noopener noreferrer" target="_blank"><span aria-hidden="true">{target === "x" ? "X" : target === "linkedin" ? "in" : target === "facebook" ? "f" : target === "telegram" ? "➤" : "◉"}</span>{label}</a>)}</div>
+              <div className="share-direct-targets"><XPublishButton blob={blob} filename={filename} locale={locale} onPublished={() => void trackShareEvent(id, "certificate", "x", "target_click")} onStatus={setStatus} text={message} url={payload("x").url} />{directLinks.map(({ target, href, label }) => <a href={href} key={target} onClick={() => void trackShareEvent(id, "certificate", target, "target_click")} rel="noopener noreferrer" target="_blank"><span aria-hidden="true">{target === "linkedin" ? "in" : target === "facebook" ? "f" : target === "telegram" ? "➤" : "◉"}</span>{label}</a>)}</div>
             </div>
             <div className="share-studio-actions">
-              <button className="share-native-button" disabled={loading} onClick={nativeShare} type="button"><Send size={16} />{loading ? (locale === "zh" ? "正在准备图片" : "Preparing image") : (locale === "zh" ? "带图片分享" : "Share with image")}</button>
-              <div className="share-utility-actions"><button onClick={copy} type="button"><Copy size={14} />{locale === "zh" ? "复制文案" : "Copy text"}</button><button disabled={!blob} onClick={download} type="button"><Download size={14} />{locale === "zh" ? "下载 PNG" : "Download PNG"}</button></div>
+              <div className="share-utility-actions"><button disabled={loading || !blob} onClick={copyImage} type="button"><ImageIcon size={14} />{loading ? (locale === "zh" ? "准备图片" : "Preparing") : (locale === "zh" ? "复制图片" : "Copy image")}</button><button disabled={!blob} onClick={download} type="button"><Download size={14} />{locale === "zh" ? "下载 PNG" : "Download PNG"}</button></div>
               {status && <p aria-live="polite" className="share-studio-status"><Check size={13} />{status}</p>}
             </div>
           </div>

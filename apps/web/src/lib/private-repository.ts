@@ -37,13 +37,15 @@ export async function getAchievementMetrics(userId: string) {
 }
 
 export async function getAccountSecurityInfo(userId: string, currentSessionId: string) {
-  const db = await getD1(); if (!db) return { providers: [], sessions: [] };
-  const [accounts, sessions] = await Promise.all([
+  const db = await getD1(); if (!db) return { providers: [], sessions: [], socialAccounts: [] };
+  const [accounts, sessions, socialAccounts] = await Promise.all([
     db.prepare("SELECT DISTINCT provider_id provider FROM account WHERE user_id=?1 ORDER BY provider_id").bind(userId).all<{ provider: string }>(),
     db.prepare("SELECT id,created_at,updated_at,expires_at,ip_address,user_agent FROM session WHERE user_id=?1 ORDER BY updated_at DESC").bind(userId).all<Record<string, unknown>>(),
+    db.prepare("SELECT provider,provider_username,updated_at FROM social_connections WHERE user_id=?1 ORDER BY provider").bind(userId).all<{ provider: string; provider_username: string | null; updated_at: number }>(),
   ]);
   return {
     providers: accounts.results.map((row) => row.provider),
     sessions: sessions.results.map((row) => ({ id: String(row.id), createdAt: Number(row.created_at), updatedAt: Number(row.updated_at), expiresAt: Number(row.expires_at), ipAddress: row.ip_address ? String(row.ip_address) : null, userAgent: row.user_agent ? String(row.user_agent) : null, current: String(row.id) === currentSessionId })),
+    socialAccounts: socialAccounts.results.map((row) => ({ provider: row.provider, username: row.provider_username, updatedAt: Number(row.updated_at) })),
   };
 }

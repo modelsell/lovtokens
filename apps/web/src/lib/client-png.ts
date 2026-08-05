@@ -3,7 +3,11 @@
 export async function rasterizeSvgToPng(sourceUrl: string, width: number, height: number) {
   const response = await fetch(sourceUrl);
   if (!response.ok) throw new Error(`Unable to load image (${response.status})`);
-  const source = new Blob([await response.text()], { type: "image/svg+xml;charset=utf-8" });
+  return rasterizeSvgStringToPng(await response.text(), width, height);
+}
+
+export async function rasterizeSvgStringToPng(markup: string, width: number, height: number) {
+  const source = new Blob([markup], { type: "image/svg+xml;charset=utf-8" });
   const sourceObjectUrl = URL.createObjectURL(source);
 
   try {
@@ -33,4 +37,14 @@ export function triggerPngDownload(blob: Blob, filename: string) {
   link.href = url;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
+}
+
+export async function copyPngToClipboard(blob: Blob) {
+  if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) return false;
+  try {
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+    return true;
+  } catch {
+    return false;
+  }
 }

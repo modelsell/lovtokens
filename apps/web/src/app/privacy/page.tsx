@@ -27,6 +27,8 @@ export default async function PrivacyPage() {
       <ul>{locale === "zh" ? <><li>提示词、助手回复、工具输出或代码</li><li>文件路径、项目名称、仓库名称或 Git 远程地址</li><li>API Key、服务商 Cookie 或私有服务商端点</li><li>原始日志文件或稳定的设备标识符</li></> : <><li>Prompts, assistant replies, tool output, or code</li><li>File paths, project names, repository names, or Git remotes</li><li>API keys, provider cookies, or private provider endpoints</li><li>Raw log files or stable machine identifiers</li></>}</ul>
       <h2>{t(locale, "Public by choice")}</h2>
       <p>{locale === "zh" ? "新档案默认私密。精确总量、排名、头像、模型和费用均可独立控制。隐藏字段会在服务端从 HTML、JSON-LD、API 结果和生成图片中移除。" : "New profiles are private. Exact totals, rank, avatar, models and cost each have independent controls. Hidden fields are removed on the server from HTML, JSON-LD, API results and generated images."}</p>
+      <h2>{locale === "zh" ? "社交平台授权" : "Social publishing authorization"}</h2>
+      <p>{locale === "zh" ? "只有在用户主动连接 X 并确认发布时，LovTokens 才会上传所选分享图片并代表该 X 账号创建帖子。X 访问令牌和刷新令牌使用独立密钥加密存储；导出数据不包含令牌，断开连接或删除账号会删除本地保存的授权。" : "LovTokens uploads a selected share image and creates a Post only after the user explicitly connects X and chooses to publish. X access and refresh tokens are encrypted with a separate key; exports exclude tokens, and disconnecting or deleting the account removes the locally stored authorization."}</p>
       <h2>{t(locale, "Control")}</h2>
       <p>{locale === "zh" ? <>用户可以使用 <code>lovtokens show-data</code> 检查上传内容、撤销设备、导出汇总数据、隐藏档案或删除账号。已删除证书仅保留不含身份信息的撤销证明。</> : <>Users can inspect an upload with <code>lovtokens show-data</code>, revoke devices, export aggregate data, hide a profile, or delete the account. Deleted certificates retain only a revoked proof without identity.</>}</p>
     </article>

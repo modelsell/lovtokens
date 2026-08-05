@@ -15,21 +15,24 @@ import { languageAlternates, localePath } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
 import { getCertificate } from "@/lib/repository";
 import { getRuntimeEnv, siteUrl } from "@/lib/runtime";
+import { certificateStyles, type CertificateStyle } from "@/lib/share-preview";
 /* eslint-disable @next/next/no-img-element -- the server-generated QR code is a data URI */
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ share_style?: string }> }): Promise<Metadata> {
   const locale = await getLocale();
-  const { id } = await params;
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const certificate = await getCertificate(id);
   if (!certificate || (certificate.status === "active" && !certificate.indexable)) return { title: locale === "zh" ? "私密成就证明" : "Private achievement proof", robots: { index: false, follow: false } };
   const title = `${certificate.displayName} · ${formatTokenCount(certificate.processedTokens)} ${locale === "zh" ? "Token 成就证明" : "Token Achievement Proof"}`;
   const description = locale === "zh" ? `验证 ${certificate.displayName} 的 LovTokens 成就记录及密码学摘要。` : `Verify ${certificate.displayName}'s LovTokens achievement record and cryptographic digest.`;
-  const image = `/certificate/${encodeURIComponent(certificate.id)}/social.png?lang=${locale === "zh" ? "zh" : "en"}&style=collector`;
+  const style = certificateStyles.includes(query.share_style as CertificateStyle) ? query.share_style as CertificateStyle : "collector";
+  const image = `/certificate/${encodeURIComponent(certificate.id)}/social.png?lang=${locale === "zh" ? "zh" : "en"}&style=${style}`;
+  const publicUrl = `/certificate/${certificate.id}?share_style=${style}`;
   return {
     title,
     description,
     alternates: languageAlternates(`/certificate/${certificate.id}`, locale),
-    openGraph: { title, description, url: `/certificate/${certificate.id}`, type: "article", images: [{ url: image, width: 1080, height: 1350, type: "image/png", alt: title }] },
+    openGraph: { title, description, url: publicUrl, type: "article", images: [{ url: image, width: 1080, height: 1350, type: "image/png", alt: title }] },
     twitter: { card: "summary_large_image", title, description, images: [image] },
   };
 }

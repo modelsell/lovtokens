@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server.browser";
 import { achievementFor, formatTokenCount, sourceLabel } from "@/lib/format";
 import { getShareProfile } from "@/lib/repository";
 import { getShareBucket, siteUrl } from "@/lib/runtime";
-import { profilePreviewKey, shareThemes } from "@/lib/share-preview";
+import { monthlyPreviewKey, profilePreviewKey, shareThemes } from "@/lib/share-preview";
 import { svgImageDocument } from "@/lib/svg-image";
 /* eslint-disable @next/next/no-img-element -- the server-rendered SVG embeds the QR data URI directly */
 
@@ -19,9 +19,13 @@ const themes = {
 export async function GET(request: Request, { params }: { params: Promise<{ handle: string; variant: string }> }) {
   const { handle, variant } = await params;
   const url = new URL(request.url); const theme = (url.searchParams.get("theme") || "obsidian") as keyof typeof themes; if (!themes[theme]) return new Response("Unknown theme", { status: 400 });
-  if (variant === "social.png") {
-    const p = await getShareProfile(handle, "all"); if (!p) return new Response("Profile is private or missing", { status: 404 });
-    const cached = await (await getShareBucket())?.get(profilePreviewKey(p.handle, p.statsVersion, p.privacyVersion, theme as (typeof shareThemes)[number]));
+  if (variant === "social.png" || variant === "month-social.png") {
+    const isMonth = variant === "month-social.png";
+    const p = await getShareProfile(handle, isMonth ? "month" : "all"); if (!p) return new Response("Profile is private or missing", { status: 404 });
+    const previewKey = isMonth
+      ? monthlyPreviewKey(p.handle, p.statsVersion, p.privacyVersion, theme as (typeof shareThemes)[number])
+      : profilePreviewKey(p.handle, p.statsVersion, p.privacyVersion, theme as (typeof shareThemes)[number]);
+    const cached = await (await getShareBucket())?.get(previewKey);
     if (!cached) return Response.redirect(new URL("/share-fallback.png", request.url), 307);
     return new Response(cached.body, { headers: { "content-type": "image/png", "cache-control": "public,max-age=31536000,immutable", etag: cached.httpEtag } });
   }

@@ -32,6 +32,16 @@ export type PublicProfile = LeaderboardEntry & {
   history: Array<{ date: string; tokens: number }>;
   sources: Array<{ source: string; tokens: number }>;
   models: Array<{ model: string; tokens: number }>;
+  achievements: PublicAchievement[];
+};
+
+export type PublicAchievement = {
+  key: string;
+  kind: "behavior" | "milestone" | "monthly";
+  earnedAt: number;
+  certificateId?: string;
+  period?: string;
+  processedTokens?: number;
 };
 
 export type CertificateRecord = {

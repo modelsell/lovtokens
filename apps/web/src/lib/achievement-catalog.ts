@@ -201,3 +201,16 @@ export function legendaryAchievements(
     }),
   ];
 }
+
+export function earnedBehaviorAchievements(rows: Array<{ key: string; earnedAt: number }>, locale: Locale): AchievementBadgeData[] {
+  const earned = new Map(rows.map((row) => [row.key, row.earnedAt]));
+  const catalog = [
+    ...explorationAchievements(EMPTY_ACHIEVEMENT_METRICS, locale),
+    ...advancedAchievements(EMPTY_ACHIEVEMENT_METRICS, locale),
+    ...legendaryAchievements(EMPTY_ACHIEVEMENT_METRICS, locale),
+  ];
+  return catalog.flatMap((achievement) => {
+    const issuedAt = earned.get(achievement.key);
+    return issuedAt === undefined ? [] : [{ ...achievement, tokens: achievement.target, unlocked: true, issuedAt }];
+  }).sort((a, b) => Number(b.issuedAt || 0) - Number(a.issuedAt || 0));
+}

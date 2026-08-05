@@ -1,4 +1,5 @@
-import type { CertificateRecord, LeaderboardEntry, PublicProfile } from "./data";
+import type { CertificateRecord, LeaderboardEntry, PublicAchievement, PublicProfile } from "./data";
+import { achievementProgress, queryAchievementMetrics } from "./achievement-metrics";
 import { getD1 } from "./runtime";
 
 const rangeStart = (period: string) => {
@@ -99,10 +100,13 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
     FROM profiles p JOIN usage_daily ud ON ud.user_id=p.user_id AND ud.quarantined=0 AND ud.trust_level!='imported'
     WHERE p.handle=?1 AND p.is_public=1 GROUP BY p.user_id`).bind(handle).first<Record<string, unknown>>();
   if (!profile) return null;
-  const [historyResult, sourceResult, modelResult, board] = await Promise.all([
+  const [historyResult, sourceResult, modelResult, achievementResult, certificateResult, achievementMetrics, board] = await Promise.all([
     db.prepare(`SELECT utc_date AS date, SUM(input_tokens_total+output_tokens_total) AS tokens FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.quarantined=0 AND ud.trust_level!='imported' GROUP BY utc_date ORDER BY utc_date DESC LIMIT 366`).bind(handle).all<{ date: string; tokens: number }>(),
     db.prepare(`SELECT source, SUM(input_tokens_total+output_tokens_total) AS tokens FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.quarantined=0 AND ud.trust_level!='imported' GROUP BY source ORDER BY tokens DESC, source ASC`).bind(handle).all<{ source: string; tokens: number }>(),
     db.prepare(`SELECT model, SUM(input_tokens_total+output_tokens_total) AS tokens FROM usage_daily ud JOIN profiles p ON p.user_id=ud.user_id WHERE p.handle=?1 AND ud.quarantined=0 AND ud.trust_level!='imported' GROUP BY model ORDER BY tokens DESC, model ASC LIMIT 5`).bind(handle).all<{ model: string; tokens: number }>(),
+    db.prepare(`SELECT a.achievement_key,a.earned_at FROM achievements a JOIN profiles p ON p.user_id=a.user_id WHERE p.handle=?1 ORDER BY a.earned_at DESC`).bind(handle).all<{ achievement_key: string; earned_at: number }>(),
+    db.prepare(`SELECT c.id,c.kind,c.period,c.processed_tokens,c.issued_at FROM certificates c JOIN profiles p ON p.user_id=c.user_id WHERE p.handle=?1 AND c.status='active' ORDER BY c.issued_at DESC`).bind(handle).all<{ id: string; kind: string; period: string; processed_tokens: number; issued_at: number }>(),
+    queryAchievementMetrics(db, String(profile.user_id)),
     getLeaderboard("all", "all", 10_000),
   ]);
   const found = board.find((entry) => entry.handle === handle);
@@ -110,6 +114,21 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
   const showModels = Boolean(profile.show_models);
   const sources = sourceResult.results.map((row) => ({ source: row.source, tokens: Number(row.tokens) }));
   const models = modelResult.results.map((row) => ({ model: row.model, tokens: Number(row.tokens) }));
+  const currentAchievementProgress = achievementProgress(achievementMetrics);
+  const achievements: PublicAchievement[] = [
+    ...achievementResult.results.filter((row) => {
+      const current = currentAchievementProgress[row.achievement_key];
+      return current && current.value >= current.target;
+    }).map((row) => ({ key: row.achievement_key, kind: "behavior" as const, earnedAt: Number(row.earned_at) })),
+    ...certificateResult.results.map((row) => ({
+      key: row.kind === "monthly" ? `monthly-${row.period}` : `milestone-${row.period}`,
+      kind: row.kind === "monthly" ? "monthly" as const : "milestone" as const,
+      earnedAt: Number(row.issued_at),
+      certificateId: row.id,
+      period: row.period,
+      processedTokens: Number(row.processed_tokens),
+    })),
+  ].sort((a, b) => b.earnedAt - a.earnedAt);
   return {
     rank: found?.rank ?? 0,
     handle: String(profile.handle),
@@ -141,6 +160,7 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
     history: showExactTokens ? historyResult.results.reverse().map((row) => ({ date: row.date, tokens: Number(row.tokens) })) : [],
     sources: showExactTokens ? sources : [],
     models: showExactTokens && showModels ? models : [],
+    achievements,
   };
 }
 

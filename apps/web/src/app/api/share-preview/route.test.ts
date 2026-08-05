@@ -30,6 +30,12 @@ describe("share preview upload", () => {
     expect(mocks.put).toHaveBeenCalledWith("social-v1/profile/jie/8-3/obsidian.png", expect.any(Uint8Array), expect.any(Object));
   });
 
+  it("stores the selected monthly card for social link previews", async () => {
+    const response = await POST(new Request("https://lovtokens.test/api/share-preview?kind=profile&id=jie&variant=month&theme=terminal", { method: "POST", headers: { "content-type": "image/png", origin: "https://lovtokens.test" }, body: png(1200, 630) }));
+    expect(response.status).toBe(201);
+    expect(mocks.put).toHaveBeenCalledWith("social-v1/month/jie/8-3/terminal.png", expect.any(Uint8Array), expect.any(Object));
+  });
+
   it("rejects incorrectly sized image payloads", async () => {
     const response = await POST(new Request("https://lovtokens.test/api/share-preview?kind=profile&id=jie&theme=obsidian", { method: "POST", headers: { "content-type": "image/png" }, body: png(1080, 1350) }));
     expect(response.status).toBe(400);

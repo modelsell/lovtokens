@@ -6,6 +6,9 @@ interface CloudflareEnv {
   PUBLIC_SITE_URL?: string;
   GITHUB_CLIENT_ID?: string;
   GITHUB_CLIENT_SECRET?: string;
+  X_CLIENT_ID?: string;
+  X_CLIENT_SECRET?: string;
+  SOCIAL_TOKEN_ENCRYPTION_KEY?: string;
   EMAIL_PASSWORD_AUTH_ENABLED?: string;
   RESEND_API_KEY?: string;
   AUTH_EMAIL_FROM?: string;

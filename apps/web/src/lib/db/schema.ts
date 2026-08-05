@@ -172,4 +172,30 @@ export const shareEventsDaily = sqliteTable("share_events_daily", {
   primaryKey({ columns: [table.utcDate, table.userId, table.contentId, table.contentKind, table.target, table.event] }),
 ]);
 
+export const socialConnections = sqliteTable("social_connections", {
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  providerUserId: text("provider_user_id").notNull(),
+  providerUsername: text("provider_username"),
+  accessTokenEncrypted: text("access_token_encrypted").notNull(),
+  refreshTokenEncrypted: text("refresh_token_encrypted"),
+  tokenExpiresAt: integer("token_expires_at"),
+  scope: text("scope").notNull(),
+  createdAt: integer("created_at").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.userId, table.provider] }),
+  uniqueIndex("social_connections_provider_user_idx").on(table.provider, table.providerUserId),
+]);
+
+export const socialOauthStates = sqliteTable("social_oauth_states", {
+  stateHash: text("state_hash").primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  codeVerifierEncrypted: text("code_verifier_encrypted").notNull(),
+  returnTo: text("return_to").notNull(),
+  expiresAt: integer("expires_at").notNull(),
+  createdAt: integer("created_at").notNull(),
+});
+
 export const authSchema = { user, session, account, verification };

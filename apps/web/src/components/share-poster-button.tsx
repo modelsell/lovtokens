@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Copy, Download, Image as ImageIcon, Link2, Send, Share2, X } from "lucide-react";
-import { rasterizeSvgToPng, triggerPngDownload } from "@/lib/client-png";
+import { Check, Download, Image as ImageIcon, Link2, Share2, X } from "lucide-react";
+import { copyPngToClipboard, rasterizeSvgToPng, triggerPngDownload } from "@/lib/client-png";
 import { formatTokenCount } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
 import { localePath } from "@/lib/i18n";
 import { trackShareEvent } from "@/lib/share-analytics";
 import { directShareTargets, directShareUrl, trackingUrl, type ShareContentKind, type ShareTarget } from "@/lib/share-targets";
 import type { ShareTheme } from "@/lib/share-preview";
+import { XPublishButton } from "./x-publish-button";
 /* eslint-disable @next/next/no-img-element -- generated share posters are dynamic SVG endpoints */
 
 const themeOptions: Array<{ key: ShareTheme; name: string }> = [
@@ -50,7 +51,10 @@ export function SharePosterButton(props: Props) {
     ? { url: `/share/${handle}/profile.svg?theme=${selected.key}`, width: 1080, height: 1350, label: locale === "zh" ? "全部档案" : "All-time profile" }
     : { url: `/share/${handle}/month.svg?theme=${selected.key}`, width: 1200, height: 630, label: locale === "zh" ? "本月战报" : "Monthly recap" };
   const filename = `lovtokens-${handle}-${contentKind}-${selected.key}.png`;
-  const canonicalUrl = `${siteOrigin}${localePath(`/u/${handle}`, locale)}`;
+  const sharePageUrl = new URL(localePath(`/u/${handle}`, locale), siteOrigin);
+  sharePageUrl.searchParams.set("share_card", contentKind);
+  sharePageUrl.searchParams.set("share_theme", selected.key);
+  const canonicalUrl = sharePageUrl.toString();
 
   useEffect(() => {
     if (!open) return;
@@ -60,7 +64,7 @@ export function SharePosterButton(props: Props) {
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
     closeButtonRef.current?.focus();
-    void trackShareEvent(handle, "profile", "native", "modal_open");
+    void trackShareEvent(handle, "profile", "copy-image", "modal_open");
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
@@ -82,12 +86,13 @@ export function SharePosterButton(props: Props) {
   useEffect(() => {
     if (!open || !canPublishPreview) return;
     let cancelled = false;
-    rasterizeSvgToPng(`/share/${handle}/social.svg?theme=obsidian`, 1200, 630).then(async (blob) => {
+    const socialSource = contentKind === "month" ? `/share/${handle}/month.svg?theme=${selected.key}` : `/share/${handle}/social.svg?theme=${selected.key}`;
+    rasterizeSvgToPng(socialSource, 1200, 630).then(async (blob) => {
       if (cancelled) return;
-      await fetch(`/api/share-preview?kind=profile&id=${encodeURIComponent(handle)}&theme=obsidian`, { method: "POST", headers: { "content-type": "image/png" }, body: blob });
+      await fetch(`/api/share-preview?kind=profile&id=${encodeURIComponent(handle)}&variant=${contentKind}&theme=${selected.key}`, { method: "POST", headers: { "content-type": "image/png" }, body: blob });
     }).catch(() => undefined);
     return () => { cancelled = true; };
-  }, [canPublishPreview, handle, open]);
+  }, [canPublishPreview, contentKind, handle, open, selected.key]);
 
   function selectKind(kind: Extract<ShareContentKind, "profile" | "month">) {
     setContentKind(kind);
@@ -113,34 +118,6 @@ export function SharePosterButton(props: Props) {
     return { title: shareTitle(props, contentKind), text: message.trim(), url: trackingUrl(canonicalUrl, target, contentKind) };
   }
 
-  async function nativeShare() {
-    const target: ShareTarget = "native";
-    const payload = targetPayload(target);
-    void trackShareEvent(handle, contentKind, target, "target_click");
-    try {
-      const file = posterBlob ? new File([posterBlob], filename, { type: "image/png" }) : null;
-      if (navigator.share) {
-        const files = file && navigator.canShare?.({ files: [file] }) ? [file] : undefined;
-        await navigator.share({ title: payload.title, text: `${payload.text}\n${payload.url}`, url: payload.url, files });
-        setStatus(locale === "zh" ? "内容已交给系统分享。" : "Content handed to system share.");
-        void trackShareEvent(handle, contentKind, target, "native_handoff");
-        return;
-      }
-      await navigator.clipboard.writeText(`${payload.text}\n${payload.url}`);
-      setStatus(locale === "zh" ? "当前浏览器不支持系统分享，文案和链接已复制。" : "System share is unavailable; copy and link are ready to paste.");
-    } catch (error) {
-      if (error instanceof DOMException && error.name === "AbortError") return;
-      setStatus(locale === "zh" ? "未能打开系统分享，请使用下方复制或下载操作。" : "Could not open system share. Use a copy or download action below.");
-    }
-  }
-
-  async function copyText() {
-    const payload = targetPayload("copy-text");
-    await navigator.clipboard.writeText(`${payload.text}\n${payload.url}`);
-    setStatus(locale === "zh" ? "文案和链接已复制。" : "Copy and link copied.");
-    void trackShareEvent(handle, contentKind, "copy-text", "target_click");
-  }
-
   async function copyLink() {
     await navigator.clipboard.writeText(targetPayload("copy-link").url);
     setStatus(locale === "zh" ? "分享链接已复制。" : "Share link copied.");
@@ -148,13 +125,10 @@ export function SharePosterButton(props: Props) {
   }
 
   async function copyImage() {
-    if (!posterBlob || typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) {
-      if (posterBlob) triggerPngDownload(posterBlob, filename);
-      setStatus(locale === "zh" ? "浏览器不支持复制图片，已改为下载 PNG。" : "Image copy is unavailable, so the PNG was downloaded.");
-    } else {
-      await navigator.clipboard.write([new ClipboardItem({ "image/png": posterBlob })]);
-      setStatus(locale === "zh" ? "PNG 图片已复制。" : "PNG image copied.");
-    }
+    if (!posterBlob) return;
+    const copied = await copyPngToClipboard(posterBlob);
+    if (!copied) triggerPngDownload(posterBlob, filename);
+    setStatus(copied ? (locale === "zh" ? "当前 PNG 图片已复制。" : "Current PNG image copied.") : (locale === "zh" ? "浏览器不支持复制图片，已改为下载当前 PNG。" : "Image copy is unavailable, so the current PNG was downloaded."));
     void trackShareEvent(handle, contentKind, "copy-image", "target_click");
   }
 
@@ -165,7 +139,7 @@ export function SharePosterButton(props: Props) {
     void trackShareEvent(handle, contentKind, "download", "target_click");
   }
 
-  const directLinks = useMemo(() => directShareTargets.map((target) => ({
+  const directLinks = useMemo(() => directShareTargets.filter((target) => target !== "x").map((target) => ({
     target,
     href: directShareUrl(target, targetPayload(target)),
     label: targetNames[target],
@@ -182,27 +156,30 @@ export function SharePosterButton(props: Props) {
           <button aria-label={locale === "zh" ? "关闭分享工作室" : "Close share studio"} className="share-poster-close" onClick={() => setOpen(false)} ref={closeButtonRef} type="button"><X size={20} /></button>
         </header>
         <div className="share-poster-body">
-          <div className="share-poster-preview" data-landscape={source.width > source.height || undefined}><img alt={`${selected.name} ${source.label}`} height={source.height} src={source.url} width={source.width} /></div>
+          <div className="share-preview-column">
+            <div className="share-poster-preview" data-landscape={source.width > source.height || undefined}><img alt={`${selected.name} ${source.label}`} height={source.height} src={source.url} width={source.width} /></div>
+          </div>
           <div className="share-poster-controls share-studio-controls">
             <div className="share-studio-scroll">
-              <div aria-label={locale === "zh" ? "分享内容" : "Share content"} className="share-kind-switch" role="group">
-                <button aria-pressed={contentKind === "profile"} onClick={() => selectKind("profile")} type="button">{locale === "zh" ? "全部档案" : "All time"}</button>
-                <button aria-pressed={contentKind === "month"} onClick={() => selectKind("month")} type="button">{locale === "zh" ? "本月战报" : "This month"}</button>
-              </div>
-              <div aria-label={locale === "zh" ? "海报样式" : "Poster styles"} className="share-poster-themes" role="group">
-                {themeOptions.map((theme) => <button aria-pressed={theme.key === selectedTheme} data-selected={theme.key === selectedTheme || undefined} key={theme.key} onClick={() => selectTheme(theme.key)} type="button"><span data-theme={theme.key} /><strong>{theme.name}</strong><small>{theme.key === selectedTheme ? (locale === "zh" ? "已选择" : "Selected") : (locale === "zh" ? "选择" : "Choose")}</small></button>)}
+              <div className="share-side-options">
+                <div aria-label={locale === "zh" ? "分享内容" : "Share content"} className="share-kind-switch" role="group">
+                  <button aria-pressed={contentKind === "profile"} onClick={() => selectKind("profile")} type="button">{locale === "zh" ? "全部档案" : "All time"}</button>
+                  <button aria-pressed={contentKind === "month"} onClick={() => selectKind("month")} type="button">{locale === "zh" ? "本月战报" : "This month"}</button>
+                </div>
+                <div aria-label={locale === "zh" ? "海报样式" : "Poster styles"} className="share-poster-themes" role="group">
+                  {themeOptions.map((theme) => <button aria-pressed={theme.key === selectedTheme} data-selected={theme.key === selectedTheme || undefined} key={theme.key} onClick={() => selectTheme(theme.key)} type="button"><span data-theme={theme.key} /><strong>{theme.name}</strong><small>{theme.key === selectedTheme ? (locale === "zh" ? "已选择" : "Selected") : (locale === "zh" ? "选择" : "Choose")}</small></button>)}
+                </div>
               </div>
               <label className="share-copy-editor"><span>{locale === "zh" ? "分享文案" : "Share copy"}</span><textarea maxLength={500} onChange={(event) => setMessage(event.target.value)} rows={4} value={message} /></label>
               <div className="share-direct-targets">
-                {directLinks.map(({ target, href, label }) => <a href={href} key={target} onClick={() => void trackShareEvent(handle, contentKind, target, "target_click")} rel="noopener noreferrer" target="_blank"><span aria-hidden="true">{target === "x" ? "X" : target === "linkedin" ? "in" : target === "facebook" ? "f" : target === "telegram" ? "➤" : "◉"}</span>{label}</a>)}
+                <XPublishButton blob={posterBlob} filename={filename} locale={locale} onPublished={() => void trackShareEvent(handle, contentKind, "x", "target_click")} onStatus={setStatus} text={message} url={targetPayload("x").url} />
+                {directLinks.map(({ target, href, label }) => <a href={href} key={target} onClick={() => void trackShareEvent(handle, contentKind, target, "target_click")} rel="noopener noreferrer" target="_blank"><span aria-hidden="true">{target === "linkedin" ? "in" : target === "facebook" ? "f" : target === "telegram" ? "➤" : "◉"}</span>{label}</a>)}
               </div>
             </div>
             <div className="share-studio-actions">
-              <button className="share-native-button" disabled={posterState === "loading"} onClick={nativeShare} type="button"><Send size={16} />{posterState === "loading" ? (locale === "zh" ? "正在准备图片" : "Preparing image") : (locale === "zh" ? "带图片分享" : "Share with image")}</button>
-              <div className="share-utility-actions">
-                <button onClick={copyText} type="button"><Copy size={14} />{locale === "zh" ? "复制文案" : "Copy text"}</button>
+              <div className="share-utility-actions share-image-actions">
+                <button disabled={posterState === "loading" || !posterBlob} onClick={copyImage} type="button"><ImageIcon size={14} />{posterState === "loading" ? (locale === "zh" ? "准备图片" : "Preparing") : (locale === "zh" ? "复制图片" : "Copy image")}</button>
                 <button onClick={copyLink} type="button"><Link2 size={14} />{locale === "zh" ? "复制链接" : "Copy link"}</button>
-                <button disabled={!posterBlob} onClick={copyImage} type="button"><ImageIcon size={14} />{locale === "zh" ? "复制图片" : "Copy image"}</button>
                 <button disabled={!posterBlob} onClick={download} type="button"><Download size={14} />{locale === "zh" ? "下载 PNG" : "Download PNG"}</button>
               </div>
               {status && <p aria-live="polite" className="share-studio-status"><Check size={13} />{status}</p>}

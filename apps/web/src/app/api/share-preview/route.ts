@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth";
 import { getCertificate } from "@/lib/repository";
-import { certificatePreviewKey, certificateStyles, profilePreviewKey, shareThemes, validPng } from "@/lib/share-preview";
+import { certificatePreviewKey, certificateStyles, monthlyPreviewKey, profilePreviewKey, shareThemes, validPng } from "@/lib/share-preview";
 import { getD1, getShareBucket } from "@/lib/runtime";
 
 const maxBytes = 4_000_000;
@@ -22,10 +22,13 @@ export async function POST(request: Request) {
   let key: string;
   if (kind === "profile") {
     const theme = url.searchParams.get("theme") || "obsidian";
+    const variant = url.searchParams.get("variant") === "month" ? "month" : "profile";
     if (!shareThemes.includes(theme as (typeof shareThemes)[number]) || !validPng(bytes, 1200, 630)) return new Response(null, { status: 400 });
     const profile = await db.prepare("SELECT user_id,stats_version,privacy_version FROM profiles WHERE handle=?1 AND is_public=1").bind(id).first<{ user_id: string; stats_version: number; privacy_version: number }>();
     if (!profile || profile.user_id !== session.user.id) return new Response(null, { status: 403 });
-    key = profilePreviewKey(id, Number(profile.stats_version), Number(profile.privacy_version), theme as (typeof shareThemes)[number]);
+    key = variant === "month"
+      ? monthlyPreviewKey(id, Number(profile.stats_version), Number(profile.privacy_version), theme as (typeof shareThemes)[number])
+      : profilePreviewKey(id, Number(profile.stats_version), Number(profile.privacy_version), theme as (typeof shareThemes)[number]);
   } else if (kind === "certificate") {
     const style = url.searchParams.get("style") || "collector";
     const locale = url.searchParams.get("locale") === "zh" ? "zh" : "en";
