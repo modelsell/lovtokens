@@ -158,7 +158,7 @@ test("homepage exposes authentication and a signed-in user can reach the persona
   await expect(page).toHaveURL(/\/dashboard$/);
   await page.getByRole("link", { name: "Data dashboard", exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard\/insights$/);
-  await expect(page.getByRole("heading", { name: "Data dashboard" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Connect your first device" })).toBeVisible();
 
   await page.goto(`${testOrigin}/settings/account`);
   await expect(page.getByRole("heading", { name: "Account and security" })).toBeVisible();
