@@ -17,6 +17,7 @@ export type AchievementBadgeData = {
   target: number;
   unlocked: boolean;
   image?: string;
+  variant?: "club";
   targetLabel?: string;
   progressLabel?: string;
   proofPending?: boolean;
@@ -32,10 +33,16 @@ export function AchievementBadge({ achievement, locale, siteOrigin, shareProfile
   const proofHref = achievement.certificateId ? localePath(`/certificate/${encodeURIComponent(achievement.certificateId)}`, locale) : null;
   const imageBase = achievement.certificateId ? `/certificate/${encodeURIComponent(achievement.certificateId)}/image?lang=${locale}` : null;
 
-  return <article className="achievement-badge-card" data-art={achievement.image ? true : undefined} data-locked={!achievement.unlocked || undefined} data-tier={achievement.tier}>
+  return <article className="achievement-badge-card" data-art={achievement.image ? true : undefined} data-locked={!achievement.unlocked || undefined} data-tier={achievement.tier} data-variant={achievement.variant}>
     <div className="achievement-badge-visual">
-      <span aria-hidden="true" className="achievement-badge-mark">{achievement.mark}</span>
-      {achievement.image ? <Image alt={achievement.title} className="achievement-badge-art" height={640} sizes="(max-width: 720px) 84vw, (max-width: 1100px) 42vw, 25vw" src={achievement.image} width={640} /> : <><div aria-hidden="true" className="achievement-badge-rays" /><div className="achievement-badge-medal">
+      <span aria-hidden="true" className="achievement-badge-mark">{achievement.variant === "club" ? "TOKEN CLUB" : achievement.mark}</span>
+      {achievement.image ? <Image alt={achievement.title} className="achievement-badge-art" height={640} sizes="(max-width: 720px) 84vw, (max-width: 1100px) 42vw, 25vw" src={achievement.image} width={640} /> : achievement.variant === "club" ? <div className="achievement-badge-club">
+        <span>{locale === "zh" ? "认证收藏成员" : "VERIFIED MEMBER"}</span>
+        <strong>{achievement.mark}</strong>
+        <b>{locale === "zh" ? "TOKEN 俱乐部" : "TOKEN CLUB"}</b>
+        <i aria-hidden="true" />
+        <small>LOVTOKENS · PROOF SERIES</small>
+      </div> : <><div aria-hidden="true" className="achievement-badge-rays" /><div className="achievement-badge-medal">
         <span className="achievement-badge-series">LOVTOKENS</span>
         <strong>{achievement.mark}</strong>
         <b>{achievement.targetLabel || formatTokenCount(achievement.target)}</b>

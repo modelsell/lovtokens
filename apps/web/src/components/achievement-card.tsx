@@ -4,9 +4,9 @@ import { ArrowUpRight, Download } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import type { AchievementCardStyle } from "./certificate-image";
-import { formatTokenCount } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
 import { localePath } from "@/lib/i18n";
+import { milestoneClubForTokens, milestoneClubText } from "@/lib/milestone-clubs";
 import { LocaleLink } from "./locale-link";
 
 export type AchievementCardData = {
@@ -23,15 +23,16 @@ export type AchievementCardData = {
 
 function achievementCopy(achievement: AchievementCardData, locale: Locale) {
   const monthly = achievement.kind === "monthly";
+  const clubTitle = milestoneClubText(milestoneClubForTokens(achievement.processedTokens), locale).title;
   if (locale === "zh") return {
-    title: monthly ? `${achievement.period} 月度成就` : `${formatTokenCount(achievement.processedTokens)} Token 里程碑`,
-    type: monthly ? "月度成就" : "里程碑成就",
+    title: monthly ? `${achievement.period} 月度成就` : clubTitle,
+    type: monthly ? "月度成就" : "Token 俱乐部成就",
     download: "下载图片",
     proof: "查看证明",
   };
   return {
-    title: monthly ? `${achievement.period} Monthly Achievement` : `${formatTokenCount(achievement.processedTokens)} Token Milestone`,
-    type: monthly ? "Monthly achievement" : "Milestone achievement",
+    title: monthly ? `${achievement.period} Monthly Achievement` : clubTitle,
+    type: monthly ? "Monthly achievement" : "Token Club achievement",
     download: "Download image",
     proof: "View proof",
   };

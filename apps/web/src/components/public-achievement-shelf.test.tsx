@@ -15,9 +15,9 @@ describe("PublicAchievementShelf", () => {
 
     expect(screen.getByRole("heading", { name: "已获得成就徽章" })).toBeInTheDocument();
     expect(screen.getByText("UTC 夜航者")).toBeInTheDocument();
-    expect(screen.getByText("青铜起点")).toBeInTheDocument();
+    expect(screen.getByText("一亿俱乐部")).toBeInTheDocument();
     expect(screen.queryByText("removed-rule")).not.toBeInTheDocument();
     expect(container.querySelector("#achievement-night-owl")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /青铜起点/ })).toHaveAttribute("href", "/zh/certificate/cert-1");
+    expect(screen.getByRole("link", { name: /一亿俱乐部/ })).toHaveAttribute("href", "/zh/certificate/cert-1");
   });
 });

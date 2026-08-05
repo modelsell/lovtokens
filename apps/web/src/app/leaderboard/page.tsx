@@ -1,6 +1,7 @@
 import { JsonLd } from "@/components/json-ld";
 import { LeaderboardTable } from "@/components/leaderboard-table";
 import { LocaleLink } from "@/components/locale-link";
+import { LocalizedTimezoneClock } from "@/components/localized-timezone-clock";
 import { PageHero } from "@/components/page-hero";
 import { getLeaderboard } from "@/lib/repository";
 import { siteUrl } from "@/lib/runtime";
@@ -26,5 +27,5 @@ export function FilterBar({ period, source, locale = "en" }: { period: string; s
 }
 
 export function LeaderboardFootnote({ locale = "en" }: { locale?: Locale }) {
-  return <p className="leaderboard-note"><span>{t(locale, "Daily statistics time zone: UTC (UTC+0)")}</span><span>{t(locale, "Only information users choose to make public is shown.")}</span></p>;
+  return <p className="leaderboard-note"><LocalizedTimezoneClock baseLabel={t(locale, "Daily statistics time zone: UTC (UTC+0)")} initialNow={new Date().toISOString()} locale={locale} /><span>{t(locale, "Only information users choose to make public is shown.")}</span></p>;
 }

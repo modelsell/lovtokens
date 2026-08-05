@@ -6,16 +6,9 @@ import { MILESTONE_THRESHOLDS } from "@/lib/certificates";
 import { formatTokenCount } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
+import { milestoneClubForTarget, milestoneClubText } from "@/lib/milestone-clubs";
 import { getAchievementMetrics, getAchievementsForUser, getCertificatesForUser, getPrivateSummary } from "@/lib/private-repository";
 import { siteUrl } from "@/lib/runtime";
-
-const milestoneDetails: Array<{ mark: string; tier: AchievementBadgeData["tier"]; zh: [string, string]; en: [string, string] }> = [
-  { mark: "I", tier: "bronze", zh: ["青铜起点", "累计处理一亿 Token，开启你的收藏序列。"], en: ["Bronze Origin", "Process one hundred million tokens and begin your collection."] },
-  { mark: "II", tier: "jade", zh: ["翡翠进阶", "累计处理十亿 Token，进入稳定活跃阶段。"], en: ["Jade Momentum", "Process one billion tokens and enter sustained activity."] },
-  { mark: "III", tier: "sapphire", zh: ["蓝宝石信标", "累计处理百亿 Token，建立清晰的长期使用轨迹。"], en: ["Sapphire Signal", "Process ten billion tokens and establish a long-term signal."] },
-  { mark: "IV", tier: "amethyst", zh: ["紫晶轨道", "累计处理五百亿 Token，进入高阶使用轨道。"], en: ["Amethyst Orbit", "Process fifty billion tokens and enter an advanced usage orbit."] },
-  { mark: "V", tier: "gold", zh: ["鎏金传奇", "累计处理一千亿 Token，完成最高等级里程碑。"], en: ["Gilded Legend", "Process one hundred billion tokens and complete the highest milestone."] },
-];
 
 export default async function CertificatesDashboard() {
   const locale = await getLocale();
@@ -38,16 +31,18 @@ export default async function CertificatesDashboard() {
     isPublic: Boolean(profileRow.is_public),
   };
   const milestoneCertificates = new Map(certificates.filter((row) => String(row.kind) === "milestone").map((row) => [Number(row.period), row]));
-  const milestones: AchievementBadgeData[] = MILESTONE_THRESHOLDS.map((target, index) => {
+  const milestones: AchievementBadgeData[] = MILESTONE_THRESHOLDS.map((target) => {
     const certificate = milestoneCertificates.get(target);
-    const detail = milestoneDetails[index]!;
-    const copy = locale === "zh" ? detail.zh : detail.en;
+    const detail = milestoneClubForTarget(target);
+    const copy = milestoneClubText(detail, locale);
     return {
       key: `milestone-${target}`,
-      title: copy[0],
-      description: copy[1],
+      title: copy.title,
+      description: copy.description,
       mark: detail.mark,
       tier: detail.tier,
+      variant: "club",
+      targetLabel: detail.mark,
       tokens: total,
       target,
       unlocked: total >= target,
@@ -93,7 +88,7 @@ export default async function CertificatesDashboard() {
       <div className="achievement-badge-grid achievement-special-grid">{legendary.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} shareProfile={shareProfile} siteOrigin={siteUrl()} />)}</div>
     </section>
     <section className="achievement-badge-section achievement-milestone-section">
-      <header><span className="eyebrow">{locale === "zh" ? "里程碑系列" : "MILESTONE SERIES"}</span><h2>{locale === "zh" ? "带证明资料的 Token 收藏徽章" : "Token badges with proof records"}</h2><p>{locale === "zh" ? "达到累计 Token 门槛后生成独立编号、证明页面与可下载收藏卡。" : "Reach a lifetime token threshold to receive an independent ID, proof page, and downloadable collectible cards."}</p></header>
+      <header><span className="eyebrow">{locale === "zh" ? "Token 俱乐部系列" : "TOKEN CLUB SERIES"}</span><h2>{locale === "zh" ? "带证明资料的 Token 俱乐部徽章" : "Token Club badges with proof records"}</h2><p>{locale === "zh" ? "从一亿俱乐部到千亿俱乐部，每次晋级都会生成独立编号、可验证证明页面与专属收藏卡。" : "Advance from the 100 Million Club to the 100 Billion Club, with a unique ID, verifiable proof page, and collectible card at every tier."}</p></header>
       <div className="achievement-badge-grid">{milestones.map((achievement) => <AchievementBadge achievement={achievement} key={achievement.key} locale={locale} siteOrigin={siteUrl()} />)}</div>
     </section>
     {monthly.length > 0 && <section className="achievement-badge-section achievement-monthly-section">

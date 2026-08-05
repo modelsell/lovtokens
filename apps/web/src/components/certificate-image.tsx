@@ -1,6 +1,7 @@
 import { formatTokenCount } from "@/lib/format";
 import type { CertificateRecord } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
+import { milestoneClubForTokens, milestoneClubText } from "@/lib/milestone-clubs";
 /* eslint-disable @next/next/no-img-element -- the server-rendered SVG embeds the QR data URI directly */
 
 type Props = {
@@ -24,11 +25,11 @@ type CardTheme = {
 };
 
 const milestoneThemes: Array<{ minimum: number; theme: CardTheme }> = [
-  { minimum: 100_000_000_000, theme: { code: "M—05", mark: "V", name: { en: "Gilded Legend", zh: "鎏金传奇" }, background: "#18140c", accent: "#f2d27f", secondary: "#9c681f", pattern: "repeating-linear-gradient(118deg,rgba(242,210,127,.1) 0px,rgba(242,210,127,.1) 1px,transparent 1px,transparent 30px)" } },
-  { minimum: 50_000_000_000, theme: { code: "M—04", mark: "IV", name: { en: "Amethyst Orbit", zh: "紫晶轨道" }, background: "#151020", accent: "#c49aef", secondary: "#684697", pattern: "repeating-radial-gradient(circle at 50% 35%,transparent 0 31px,rgba(196,154,239,.11) 32px 33px)" } },
-  { minimum: 10_000_000_000, theme: { code: "M—03", mark: "III", name: { en: "Sapphire Signal", zh: "蓝宝石信标" }, background: "#0c1520", accent: "#79c5f2", secondary: "#305e9f", pattern: "linear-gradient(rgba(121,197,242,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(121,197,242,.07) 1px,transparent 1px)" } },
-  { minimum: 1_000_000_000, theme: { code: "M—02", mark: "II", name: { en: "Jade Momentum", zh: "翡翠进阶" }, background: "#0e1813", accent: "#8ad9a4", secondary: "#326b49", pattern: "repeating-linear-gradient(135deg,rgba(138,217,164,.08) 0px,rgba(138,217,164,.08) 1px,transparent 1px,transparent 34px)" } },
-  { minimum: 0, theme: { code: "M—01", mark: "I", name: { en: "Bronze Origin", zh: "青铜起点" }, background: "#1a130f", accent: "#d69a63", secondary: "#754628", pattern: "radial-gradient(circle at 50% 35%,rgba(214,154,99,.14) 0 2px,transparent 3px)" } },
+  { minimum: 100_000_000_000, theme: { code: "M—05", mark: "100B", name: { en: "100 Billion Club", zh: "千亿俱乐部" }, background: "#151208", accent: "#f4d477", secondary: "#8d641a", pattern: "repeating-conic-gradient(from 45deg,rgba(244,212,119,.1) 0deg 2deg,transparent 2deg 18deg)" } },
+  { minimum: 50_000_000_000, theme: { code: "M—04", mark: "50B", name: { en: "50 Billion Club", zh: "五百亿俱乐部" }, background: "#160d20", accent: "#d4a0ff", secondary: "#67408e", pattern: "repeating-radial-gradient(circle at 50% 35%,transparent 0 27px,rgba(212,160,255,.12) 28px 30px)" } },
+  { minimum: 10_000_000_000, theme: { code: "M—03", mark: "10B", name: { en: "10 Billion Club", zh: "百亿俱乐部" }, background: "#081522", accent: "#72d4ff", secondary: "#245b91", pattern: "linear-gradient(rgba(114,212,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(114,212,255,.08) 1px,transparent 1px)" } },
+  { minimum: 1_000_000_000, theme: { code: "M—02", mark: "1B", name: { en: "Billion Club", zh: "十亿俱乐部" }, background: "#0a1811", accent: "#83e5a5", secondary: "#286342", pattern: "repeating-linear-gradient(135deg,rgba(131,229,165,.1) 0px,rgba(131,229,165,.1) 2px,transparent 2px,transparent 30px)" } },
+  { minimum: 0, theme: { code: "M—01", mark: "100M", name: { en: "100 Million Club", zh: "一亿俱乐部" }, background: "#1b110b", accent: "#eeac6f", secondary: "#72401f", pattern: "radial-gradient(circle at 50% 35%,rgba(238,172,111,.18) 0 2px,transparent 3px)" } },
 ];
 
 const monthlyTheme: CardTheme = {
@@ -55,7 +56,7 @@ function CollectorCertificateImage({ certificate: c, locale, proof, qr }: Props)
   const theme = achievementCardThemeFor(c.kind, c.processedTokens);
   const title = monthly
     ? (locale === "zh" ? `${c.period} 月度成就` : `${c.period} Monthly Achievement`)
-    : (locale === "zh" ? `${formatTokenCount(c.processedTokens)} Token 里程碑` : `${formatTokenCount(c.processedTokens)} Token Milestone`);
+    : milestoneClubText(milestoneClubForTokens(c.processedTokens), locale).title;
   const proofLabel = proof === "signature-verified"
     ? (locale === "zh" ? "签名与数据完整性已验证" : "Signature and data integrity verified")
     : proof === "hash-verified"
@@ -81,7 +82,7 @@ function CollectorCertificateImage({ certificate: c, locale, proof, qr }: Props)
     <div style={{ alignItems: "center", display: "flex", flexDirection: "column", marginTop: 55, position: "relative" }}>
       <div style={{ alignItems: "center", background: foil, borderRadius: 999, display: "flex", height: 348, justifyContent: "center", padding: 7, width: 348 }}>
         <div style={{ alignItems: "center", background: theme.background, border: `2px solid ${theme.accent}`, borderRadius: 999, display: "flex", flexDirection: "column", height: "100%", justifyContent: "center", width: "100%" }}>
-          <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: 5, opacity: .68 }}>{monthly ? "ARCHIVE EDITION" : "MILESTONE TIER"}</span>
+          <span style={{ fontSize: 12, fontWeight: 900, letterSpacing: 5, opacity: .68 }}>{monthly ? "ARCHIVE EDITION" : "VERIFIED TOKEN CLUB"}</span>
           <strong style={{ backgroundImage: foil, color: "transparent", display: "flex", fontFamily: "Georgia, serif", fontSize: 132, letterSpacing: -9, lineHeight: .9, marginTop: 9, WebkitBackgroundClip: "text" }}>{theme.mark}</strong>
           <span style={{ color: theme.accent, fontSize: 15, fontWeight: 900, letterSpacing: 3, marginTop: 8 }}>{theme.name[locale === "zh" || locale === "zh-tw" ? "zh" : "en"].toUpperCase()}</span>
         </div>
@@ -117,7 +118,7 @@ function ArchiveCertificateImage({ certificate: c, locale, proof, qr }: Props) {
   const accent = archiveAccentFor(theme.code);
   const title = monthly
     ? (locale === "zh" ? `${c.period} 月度成就` : `${c.period} Monthly Achievement`)
-    : (locale === "zh" ? `${formatTokenCount(c.processedTokens)} Token 里程碑` : `${formatTokenCount(c.processedTokens)} Token Milestone`);
+    : milestoneClubText(milestoneClubForTokens(c.processedTokens), locale).title;
   const proofLabel = proof === "signature-verified"
     ? (locale === "zh" ? "签名与数据完整性已验证" : "Signature and data integrity verified")
     : proof === "hash-verified"

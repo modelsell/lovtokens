@@ -4,11 +4,12 @@ import { afterEach, describe, expect, it } from "vitest";
 import { AchievementBadge, type AchievementBadgeData } from "./achievement-badge";
 
 const badge: AchievementBadgeData = {
-  key: "100m",
-  title: "蓝宝石信标",
-  description: "累计处理一亿 Token。",
-  mark: "III",
-  tier: "sapphire",
+  key: "milestone-100000000",
+  title: "一亿俱乐部",
+  description: "累计处理 1 亿 Token，成为一亿俱乐部认证成员。",
+  mark: "100M",
+  tier: "bronze",
+  variant: "club",
   tokens: 40_000_000,
   target: 100_000_000,
   unlocked: false,
@@ -21,6 +22,7 @@ describe("AchievementBadge", () => {
     const { container } = render(<AchievementBadge achievement={badge} locale="zh" siteOrigin="https://lovtokens.test" />);
 
     expect(container.querySelector("[data-locked]")).toBeInTheDocument();
+    expect(container.querySelector('[data-variant="club"] .achievement-badge-club')).toBeInTheDocument();
     expect(screen.getByText("尚未解锁")).toBeInTheDocument();
     expect(screen.getByText(/40%/)).toBeInTheDocument();
     expect(screen.queryByRole("link")).not.toBeInTheDocument();

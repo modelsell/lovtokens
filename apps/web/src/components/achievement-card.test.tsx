@@ -21,10 +21,10 @@ describe("AchievementCard", () => {
   it("switches between both downloadable achievement styles", () => {
     render(<AchievementCard achievement={achievement} locale="zh" />);
 
-    expect(screen.getByRole("img", { name: "100M Token 里程碑 · 金属典藏" })).toHaveAttribute("src", expect.stringContaining("/certificate/achievement-1/image?lang=zh&style=collector"));
+    expect(screen.getByRole("img", { name: "一亿俱乐部 · 金属典藏" })).toHaveAttribute("src", expect.stringContaining("/certificate/achievement-1/image?lang=zh&style=collector"));
     expect(screen.getByRole("link", { name: /下载图片/ })).toHaveAttribute("href", "/certificate/achievement-1/image?lang=zh&style=collector&download=1");
     fireEvent.click(screen.getByRole("button", { name: "档案典藏" }));
-    expect(screen.getByRole("img", { name: "100M Token 里程碑 · 档案典藏" })).toHaveAttribute("src", expect.stringContaining("style=archive"));
+    expect(screen.getByRole("img", { name: "一亿俱乐部 · 档案典藏" })).toHaveAttribute("src", expect.stringContaining("style=archive"));
     expect(screen.getByRole("link", { name: /下载图片/ })).toHaveAttribute("href", "/certificate/achievement-1/image?lang=zh&style=archive&download=1");
     expect(screen.getByRole("link", { name: "查看证明" })).toHaveAttribute("href", "/zh/certificate/achievement-1");
   });

@@ -13,6 +13,7 @@ import { verifyPayload } from "@/lib/crypto";
 import { formatTokenCount, formatPercent } from "@/lib/format";
 import { languageAlternates, localePath } from "@/lib/i18n";
 import { getLocale } from "@/lib/i18n-server";
+import { milestoneClubForTokens, milestoneClubText } from "@/lib/milestone-clubs";
 import { getCertificate } from "@/lib/repository";
 import { getRuntimeEnv, siteUrl } from "@/lib/runtime";
 import { certificateStyles, type CertificateStyle } from "@/lib/share-preview";
@@ -23,7 +24,10 @@ export async function generateMetadata({ params, searchParams }: { params: Promi
   const [{ id }, query] = await Promise.all([params, searchParams]);
   const certificate = await getCertificate(id);
   if (!certificate || (certificate.status === "active" && !certificate.indexable)) return { title: locale === "zh" ? "私密成就证明" : "Private achievement proof", robots: { index: false, follow: false } };
-  const title = `${certificate.displayName} · ${formatTokenCount(certificate.processedTokens)} ${locale === "zh" ? "Token 成就证明" : "Token Achievement Proof"}`;
+  const achievementTitle = certificate.kind === "monthly"
+    ? `${formatTokenCount(certificate.processedTokens)} ${locale === "zh" ? "Token 月度成就" : "Token Monthly Achievement"}`
+    : milestoneClubText(milestoneClubForTokens(certificate.processedTokens), locale).title;
+  const title = `${certificate.displayName} · ${achievementTitle} ${locale === "zh" ? "成就证明" : "Achievement Proof"}`;
   const description = locale === "zh" ? `验证 ${certificate.displayName} 的 LovTokens 成就记录及密码学摘要。` : `Verify ${certificate.displayName}'s LovTokens achievement record and cryptographic digest.`;
   const style = certificateStyles.includes(query.share_style as CertificateStyle) ? query.share_style as CertificateStyle : "collector";
   const image = `/certificate/${encodeURIComponent(certificate.id)}/social.png?lang=${locale === "zh" ? "zh" : "en"}&style=${style}`;
@@ -56,8 +60,9 @@ export default async function CertificatePage({ params, searchParams }: { params
   const qr = await QRCode.toDataURL(proofUrl, { errorCorrectionLevel: "M", margin: 2, width: 240, color: { dark: "#111827", light: "#ffffff" } });
   const imageUrl = `/certificate/${encodeURIComponent(c.id)}/image?lang=${locale}&download=1`;
   const issuedDate = new Intl.DateTimeFormat(locale === "zh" ? "zh-CN" : "en-US", { day: "numeric", month: "long", year: "numeric" }).format(new Date(c.issuedAt * 1000));
-  const kindLabel = c.kind === "monthly" ? (locale === "zh" ? "月度成就" : "Monthly achievement") : (locale === "zh" ? "Token 里程碑" : "Token milestone");
-  const shareTitle = `${c.displayName} · ${formatTokenCount(c.processedTokens)} ${locale === "zh" ? "Token 成就" : "Token Achievement"}`;
+  const clubTitle = milestoneClubText(milestoneClubForTokens(c.processedTokens), locale).title;
+  const kindLabel = c.kind === "monthly" ? (locale === "zh" ? "月度成就" : "Monthly achievement") : clubTitle;
+  const shareTitle = `${c.displayName} · ${c.kind === "monthly" ? `${formatTokenCount(c.processedTokens)} ${locale === "zh" ? "Token 成就" : "Token Achievement"}` : clubTitle}`;
   const proofLabel = proof === "signature-verified" ? (locale === "zh" ? "数字签名验证通过" : "Digital signature verified") : proof === "hash-verified" ? (locale === "zh" ? "数据摘要验证通过" : "Data digest verified") : (locale === "zh" ? "证明验证失败" : "Proof verification failed");
   let frozenPayload = c.payloadJson;
   try { frozenPayload = JSON.stringify(JSON.parse(c.payloadJson), null, 2); } catch { /* Preserve the original payload for forensic inspection. */ }

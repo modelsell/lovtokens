@@ -28,7 +28,7 @@ describe("CertificateImage", () => {
   it("renders a downloadable achievement image with proof QR", () => {
     render(<CertificateImage certificate={certificate} locale="zh" proof="hash-verified" qr="data:image/png;base64,qr" />);
 
-    expect(screen.getByText("100M Token 里程碑")).toBeInTheDocument();
+    expect(screen.getAllByText("一亿俱乐部").length).toBeGreaterThan(0);
     expect(screen.getByText("数据完整性已验证")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "Achievement proof QR code" })).toHaveAttribute("src", "data:image/png;base64,qr");
     expect(screen.getByText("扫码查看证明")).toBeInTheDocument();
