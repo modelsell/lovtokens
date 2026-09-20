@@ -103,10 +103,18 @@ pnpm db:migrate:local
 # 生产环境：pnpm --filter @lovtokens/web exec wrangler d1 migrations apply lovtokens-db --remote
 ```
 
-Worker 每十分钟运行一次 Cron 触发器，用于刷新全部排行榜快照，并为符合条件的用户
-签发冻结证书。生产部署前，请配置 `CRON_SECRET` 和
+Worker 每十分钟运行一次 Cron 触发器，仅重建数据版本或 UTC 时间窗口变化的排行榜，
+并为符合条件的用户签发尚不存在的冻结证书。无数据变化时跳过成就统计；每轮任务内
+同一时间范围的证书排名最多计算一次，已有证书及签名保持不变。生产部署前，请配置 `CRON_SECRET` 和
 `CERTIFICATE_PRIVATE_JWK` 中的 ECDSA P-256 私有 JWK；开放公开排行榜之前，
 请先完成 D1 迁移并验证生产环境的查询计划。
+
+查询优化依赖 `0010_derived_data_state.sql`，必须先迁移再发布 Worker。迁移新增处理状态表
+和用量版本触发器，不修改历史用量或证书；首次运行会补建状态。版本与真实用量变更原子更新，
+重复同步不更新用量行，部分批次失败也不会把旧统计标记为最新。触发器会给每条实际变更增加
+一次用户版本更新，发布后应同时比较 D1 读取行数和写入行数。回滚应用时可保留这些新增表和触发器。
+排行榜退出/用户删除会立即使快照失效，空榜单也可复用；跨 UTC 日期保留每日排名历史。
+修改证书/成就资格规则时同步递增 `ELIGIBILITY_RULE_VERSION`，以重新检查未变更的用户。
 
 ### 许可证
 
@@ -202,11 +210,25 @@ pnpm db:migrate:local
 # production: pnpm --filter @lovtokens/web exec wrangler d1 migrations apply lovtokens-db --remote
 ```
 
-The Worker runs a ten-minute Cron trigger that refreshes all leaderboard
-snapshots and issues eligible frozen certificates. Configure `CRON_SECRET` and
+The Worker runs a ten-minute Cron trigger that rebuilds leaderboard snapshots
+only when their data revision or UTC window changes and issues missing eligible
+certificates. Unchanged users skip achievement evaluation; certificate ranks
+are calculated at most once per range per invocation. Existing certificates and
+signatures remain frozen. Configure `CRON_SECRET` and
 an ECDSA P-256 private JWK in `CERTIFICATE_PRIVATE_JWK` before production. Run
 the D1 migration and verify the production query plans before opening the
 public board.
+
+Apply `0010_derived_data_state.sql` before deploying this optimization. It adds
+processing state tables and usage-version triggers without changing historical
+usage or certificates; the first run populates the state. Versions advance
+atomically with real usage changes, including partially completed syncs.
+Identical syncs leave usage rows unchanged. Each changed usage row adds a profile
+version write, so compare both D1 rows read and rows written after deployment.
+The additive tables/triggers can remain during an application rollback. Hiding
+or deleting a user invalidates public ranks immediately; empty boards are cached,
+and UTC date changes preserve daily rank history. Bump `ELIGIBILITY_RULE_VERSION`
+when changing certificate/achievement eligibility rules to recheck unchanged users.
 
 ### License
 

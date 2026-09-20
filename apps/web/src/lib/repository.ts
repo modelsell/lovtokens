@@ -1,24 +1,23 @@
+import { cache } from "react";
+import { isSnapshotCurrent, LEADERBOARD_REVISION_SQL, rangeStart, type SnapshotState } from "./leaderboard-cache";
 import type { CertificateRecord, LeaderboardEntry, PublicAchievement, PublicProfile } from "./data";
 import { achievementProgress, queryAchievementMetrics } from "./achievement-metrics";
 import { getD1 } from "./runtime";
-
-const rangeStart = (period: string) => {
-  const now = new Date();
-  if (period === "today") return now.toISOString().slice(0, 10);
-  if (period === "7d") return new Date(now.getTime() - 6 * 86_400_000).toISOString().slice(0, 10);
-  if (period === "30d") return new Date(now.getTime() - 29 * 86_400_000).toISOString().slice(0, 10);
-  if (period === "month") return `${now.toISOString().slice(0, 7)}-01`;
-  return "0000-01-01";
-};
 
 export async function getLeaderboard(period = "month", source = "all", limit = 100): Promise<LeaderboardEntry[]> {
   const db = await getD1();
   if (!db) return [];
   try {
-  const snapshot = await db.prepare(`SELECT ls.rank,p.handle,p.display_name,p.avatar_url,p.is_anonymous,p.show_exact_tokens,p.show_avatar,ls.processed_tokens,ls.active_days,ls.percentile,ls.codex_tokens,ls.claude_tokens,ls.workbuddy_tokens,(SELECT COUNT(*) FROM achievements a WHERE a.user_id=ls.user_id)+(SELECT COUNT(*) FROM certificates c WHERE c.user_id=ls.user_id AND c.status='active') achievement_count,'collector-checked' trust_level,ls.generated_at FROM leaderboard_snapshots ls JOIN profiles p ON p.user_id=ls.user_id WHERE ls.period=?1 AND ls.source=?2 AND p.is_public=1 AND p.show_rank=1 ORDER BY ls.rank LIMIT ?3`).bind(period, source, limit).all<Record<string, unknown>>();
-  const latestVisibleProfile = await db.prepare("SELECT MAX(updated_at) updated_at FROM profiles WHERE is_public=1 AND show_rank=1").first<{ updated_at: number | null }>();
-  const snapshotGeneratedAt = Number(snapshot.results[0]?.generated_at || 0);
-  if (snapshot.results.length && snapshotGeneratedAt >= Number(latestVisibleProfile?.updated_at || 0)) return snapshot.results.map((row) => ({ rank: Number(row.rank), handle: String(row.handle), displayName: Boolean(row.is_anonymous) ? `Anonymous · ${String(row.handle).slice(-4).toUpperCase()}` : String(row.display_name), avatarUrl: row.avatar_url ? String(row.avatar_url) : null, isAnonymous: Boolean(row.is_anonymous), processedTokens: Number(row.processed_tokens), activeDays: Number(row.active_days), percentile: Number(row.percentile), codexTokens: Number(row.codex_tokens), claudeTokens: Number(row.claude_tokens), workbuddyTokens: Number(row.workbuddy_tokens), achievementCount: Number(row.achievement_count), trustLevel: String(row.trust_level), showExactTokens: Boolean(row.show_exact_tokens), showAvatar: Boolean(row.show_avatar) }));
+  // Read revision, metadata and rows in one transaction. This validates empty
+  // boards too, and avoids same-second timestamp races with sync/privacy changes.
+  const [revision, metadata, snapshot] = await db.batch<Record<string, unknown>>([
+    db.prepare(LEADERBOARD_REVISION_SQL),
+    db.prepare("SELECT * FROM leaderboard_snapshot_state WHERE period=?1 AND source=?2").bind(period, source),
+    db.prepare(`SELECT ls.rank,p.handle,p.display_name,p.avatar_url,p.is_anonymous,p.show_exact_tokens,p.show_avatar,ls.processed_tokens,ls.active_days,ls.percentile,ls.codex_tokens,ls.claude_tokens,ls.workbuddy_tokens,(SELECT COUNT(*) FROM achievements a WHERE a.user_id=ls.user_id)+(SELECT COUNT(*) FROM certificates c WHERE c.user_id=ls.user_id AND c.status='active') achievement_count,'collector-checked' trust_level,ls.generated_at FROM leaderboard_snapshots ls JOIN profiles p ON p.user_id=ls.user_id WHERE ls.period=?1 AND ls.source=?2 AND p.is_public=1 AND p.show_rank=1 ORDER BY ls.rank LIMIT ?3`).bind(period, source, limit),
+  ]);
+  const dataRevision = revision?.results[0]?.data_revision;
+  if (typeof dataRevision !== "string" || !metadata || !snapshot) throw new Error("Missing leaderboard revision/state");
+  if (isSnapshotCurrent(metadata.results[0] as SnapshotState | undefined, dataRevision, rangeStart(period))) return snapshot.results.map((row) => ({ rank: Number(row.rank), handle: String(row.handle), displayName: Boolean(row.is_anonymous) ? `Anonymous · ${String(row.handle).slice(-4).toUpperCase()}` : String(row.display_name), avatarUrl: row.avatar_url ? String(row.avatar_url) : null, isAnonymous: Boolean(row.is_anonymous), processedTokens: Number(row.processed_tokens), activeDays: Number(row.active_days), percentile: Number(row.percentile), codexTokens: Number(row.codex_tokens), claudeTokens: Number(row.claude_tokens), workbuddyTokens: Number(row.workbuddy_tokens), achievementCount: Number(row.achievement_count), trustLevel: String(row.trust_level), showExactTokens: Boolean(row.show_exact_tokens), showAvatar: Boolean(row.show_avatar) }));
   const sourceFilter = source === "all" ? "" : "AND ud.source = ?3";
   const query = `
     WITH totals AS (
@@ -86,7 +85,7 @@ export async function getShareProfile(handle: string, period: "month" | "all") {
   return { ...profile, processedTokens: Number(row?.processed_tokens || 0), activeDays: Number(row?.active_days || 0), codexTokens: Number(row?.codex_tokens || 0), claudeTokens: Number(row?.claude_tokens || 0), workbuddyTokens: Number(row?.workbuddy_tokens || 0), rank: rank?.rank || 0, percentile: rank?.percentile || 100 };
 }
 
-export async function getPublicProfile(handle: string): Promise<PublicProfile | null> {
+export const getPublicProfile = cache(async (handle: string): Promise<PublicProfile | null> => {
   const db = await getD1();
   if (!db) return null;
   const profile = await db.prepare(`
@@ -167,7 +166,7 @@ export async function getPublicProfile(handle: string): Promise<PublicProfile | 
     models: showExactTokens && showModels ? models : [],
     achievements,
   };
-}
+});
 
 export async function getCertificate(id: string): Promise<CertificateRecord | null> {
   const db = await getD1();

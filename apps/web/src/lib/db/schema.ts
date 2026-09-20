@@ -148,6 +148,22 @@ export const leaderboardSnapshots = sqliteTable("leaderboard_snapshots", {
   generatedAt: integer("generated_at", { mode: "timestamp" }).notNull(),
 });
 
+export const certificateProcessingState = sqliteTable("certificate_processing_state", {
+  userId: text("user_id").primaryKey().references(() => profiles.userId, { onDelete: "cascade" }),
+  statsVersion: integer("stats_version").notNull(),
+  rulesVersion: integer("rules_version").notNull(),
+  monthlyPeriod: text("monthly_period").notNull(),
+});
+
+export const leaderboardSnapshotState = sqliteTable("leaderboard_snapshot_state", {
+  period: text("period").notNull(),
+  source: text("source").notNull(),
+  dataRevision: text("data_revision").notNull(),
+  rangeStart: text("range_start").notNull(),
+  historyDate: text("history_date").notNull(),
+  generatedAt: integer("generated_at").notNull(),
+}, (table) => [primaryKey({ columns: [table.period, table.source] })]);
+
 export const leaderboardRankHistory = sqliteTable("leaderboard_rank_history", {
   id: text("id").primaryKey(),
   userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
